@@ -336,6 +336,8 @@ async function renderCurrentStep() {
         content += `${prefix}[Finish Tour](command:codetour.finishTour "Finish the tour")`;
       }
     }
+
+    content += "\n\n&nbsp;";
   }
 
   const comment = new CodeTourComment(

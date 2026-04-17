@@ -21,7 +21,8 @@ type SidebarCommandMessage =
         | "makeTourPrimary"
         | "unmakeTourPrimary"
         | "exportTour"
-        | "deleteTour";
+        | "deleteTour"
+        | "showTourMenu";
       tourId: string;
       stepNumber?: number;
     }
@@ -107,6 +108,8 @@ class CodeTourSidebarProvider
         return vscode.commands.executeCommand(`${EXTENSION_NAME}.${message.action}`, {
           tourId: message.tourId
         });
+      case "showTourMenu":
+        return this.showTourMenu(message.tourId);
       case "editTourAtStep":
       case "changeTourStepTags":
       case "deleteTourStep":
@@ -121,6 +124,57 @@ class CodeTourSidebarProvider
           toStep: message.toStep
         });
     }
+  }
+
+  private async showTourMenu(tourId: string) {
+    const state = buildSidebarState(store);
+    const tour = state.tours.find(t => t.id === tourId);
+    if (!tour) {
+      return;
+    }
+
+    type MenuItem = vscode.QuickPickItem & { run: () => Thenable<unknown> | void };
+    const target = { tourId };
+    const run = (action: string, ...rest: unknown[]) =>
+      vscode.commands.executeCommand(`${EXTENSION_NAME}.${action}`, target, ...rest);
+
+    const items: MenuItem[] = [];
+
+    if (tour.isActive) {
+      items.push({
+        label: "$(play) Resume Tour",
+        run: () => run("startTour", state.activeStepNumber ?? 0)
+      });
+      items.push({
+        label: "$(stop-circle) End Tour",
+        run: () => vscode.commands.executeCommand(`${EXTENSION_NAME}.endTour`)
+      });
+    } else {
+      items.push({
+        label: "$(play) Start Tour",
+        run: () => run("startTour", 0)
+      });
+    }
+
+    items.push({
+      label: tour.isEditing ? "$(preview) Preview Tour" : "$(edit) Edit Tour",
+      run: () => run(tour.isEditing ? "previewTour" : "editTour")
+    });
+    items.push({ label: "$(pencil) Change Title", run: () => run("changeTourTitle") });
+    items.push({ label: "$(note) Change Description", run: () => run("changeTourDescription") });
+    items.push({ label: "$(git-branch) Change Ref", run: () => run("changeTourRef") });
+    items.push({
+      label: tour.isPrimary ? "$(star-empty) Unset Primary" : "$(star-full) Make Primary",
+      run: () => run(tour.isPrimary ? "unmakeTourPrimary" : "makeTourPrimary")
+    });
+    items.push({ label: "$(export) Export Tour", run: () => run("exportTour") });
+    items.push({ label: "$(trash) Delete Tour", run: () => run("deleteTour") });
+
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder: tour.title,
+      title: `Tour: ${tour.title}`
+    });
+    picked?.run();
   }
 }
 
@@ -195,12 +249,18 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       }
 
       .toolbar,
-      .tour-actions,
       .summary-row,
       .tag-row {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
+      }
+
+      .tour-header-end {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
       }
 
       .toolbar {
@@ -269,10 +329,6 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         background: transparent;
         border-color: var(--vscode-focusBorder);
         color: var(--vscode-focusBorder);
-      }
-
-      .tour-actions {
-        padding: 0 10px 10px;
       }
 
       .button {
@@ -464,6 +520,7 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
 
       const ICON_EDIT = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M13.23 1a1.77 1.77 0 0 1 1.25 3.02l-.84.84-2.5-2.5.84-.84A1.77 1.77 0 0 1 13.23 1zm-3.02 2.43L1.97 11.67 1.5 14.5l2.83-.47 8.24-8.24-2.36-2.36z"/></svg>';
       const ICON_DELETE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 8.707l3.646 3.647.708-.708L8.707 8l3.647-3.646-.708-.708L8 7.293 4.354 3.646l-.708.708L7.293 8l-3.647 3.646.708.708L8 8.707z"/></svg>';
+      const ICON_MORE = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></svg>';
 
       function escapeHtml(value) {
         return String(value)
@@ -509,48 +566,6 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
           .join(" ");
 
         return '<button class="button" data-action="' + escapeHtml(action) + '" ' + attrText + ">" + escapeHtml(label) + "</button>";
-      }
-
-      function renderTourActions(tour) {
-        const actions = [];
-        actions.push(
-          renderButton(tour.isActive ? "Resume" : "Start", "startTour", {
-            "data-tour-id": tour.id,
-            "data-step-number": tour.isActive ? sidebarState.activeStepNumber : 0
-          })
-        );
-        actions.push(
-          renderButton(tour.isEditing ? "Preview" : "Edit", tour.isEditing ? "previewTour" : "editTour", {
-            "data-tour-id": tour.id
-          })
-        );
-
-        if (tour.isActive) {
-          actions.push(renderButton("End", "endTour"));
-        }
-
-        actions.push(
-          renderButton("Title", "changeTourTitle", {
-            "data-tour-id": tour.id
-          }),
-          renderButton("Description", "changeTourDescription", {
-            "data-tour-id": tour.id
-          }),
-          renderButton("Ref", "changeTourRef", {
-            "data-tour-id": tour.id
-          }),
-          renderButton(tour.isPrimary ? "Unset Primary" : "Make Primary", tour.isPrimary ? "unmakeTourPrimary" : "makeTourPrimary", {
-            "data-tour-id": tour.id
-          }),
-          renderButton("Export", "exportTour", {
-            "data-tour-id": tour.id
-          }),
-          renderButton("Delete", "deleteTour", {
-            "data-tour-id": tour.id
-          })
-        );
-
-        return actions.join("");
       }
 
       function renderCard(step) {
@@ -610,11 +625,16 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
             <summary>
               <div class="summary-row">
                 <h2 class="tour-title">\${escapeHtml(tour.title)}</h2>
-                <div class="summary-row">\${badges}</div>
+                <div class="tour-header-end">
+                  \${badges}
+                  <button class="icon-button more-button"
+                          data-action="showTourMenu"
+                          data-tour-id="\${escapeHtml(tour.id)}"
+                          title="More actions">\${ICON_MORE}</button>
+                </div>
               </div>
               \${tour.description ? '<p class="tour-copy">' + escapeHtml(tour.description) + "</p>" : ""}
             </summary>
-            <div class="tour-actions">\${renderTourActions(tour)}</div>
             \${tour.steps.length > 0
               ? '<div class="cards">' + tour.steps.map(renderCard).join("") + "</div>"
               : '<div class="empty-tour">No steps recorded yet.</div>'}
@@ -753,6 +773,10 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         }
 
         event.stopPropagation();
+        // Prevent native <summary> toggle when clicking action controls inside it.
+        if (target.closest("summary")) {
+          event.preventDefault();
+        }
 
         const payload = {
           type: "command",
