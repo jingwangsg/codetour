@@ -15,12 +15,14 @@ test("buildSidebarState projects tours into card sections with active, complete,
         {
           title: "Intro",
           description: "Welcome to the codebase",
-          file: "src/extension.ts"
+          file: "src/extension.ts",
+          color: "#ABCDEF"
         },
         {
           description: "Focus the explorer and inspect the project structure",
           view: "explorer",
-          tags: [" Basics ", " ", "UI"]
+          tags: [" Basics ", " ", "UI"],
+          color: " #0f0 "
         }
       ]
     },
@@ -50,7 +52,9 @@ test("buildSidebarState projects tours into card sections with active, complete,
       title: step.title,
       isActive: step.isActive,
       isComplete: step.isComplete,
-      tags: step.tags
+      tags: step.tags,
+      color: step.color,
+      cardStyle: step.cardStyle
     })),
     [
       {
@@ -58,14 +62,20 @@ test("buildSidebarState projects tours into card sections with active, complete,
         title: "Intro",
         isActive: false,
         isComplete: true,
-        tags: []
+        tags: [],
+        color: "#abcdef",
+        cardStyle:
+          "--step-accent-color:#abcdef;--step-accent-background:rgba(171, 205, 239, 0.18);--step-accent-border:rgba(171, 205, 239, 0.42);"
       },
       {
         stepNumber: 1,
         title: "Step #2",
         isActive: true,
         isComplete: false,
-        tags: ["Basics", "UI"]
+        tags: ["Basics", "UI"],
+        color: "#00ff00",
+        cardStyle:
+          "--step-accent-color:#00ff00;--step-accent-background:rgba(0, 255, 0, 0.18);--step-accent-border:rgba(0, 255, 0, 0.42);"
       }
     ]
   );

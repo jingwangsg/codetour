@@ -30,6 +30,7 @@ type SidebarCommandMessage =
       type: "command";
       action:
         | "editTourAtStep"
+        | "changeTourStepColor"
         | "changeTourStepTags"
         | "deleteTourStep";
       tourId: string;
@@ -111,6 +112,7 @@ class CodeTourSidebarProvider
       case "showTourMenu":
         return this.showTourMenu(message.tourId);
       case "editTourAtStep":
+      case "changeTourStepColor":
       case "changeTourStepTags":
       case "deleteTourStep":
         return vscode.commands.executeCommand(`${EXTENSION_NAME}.${message.action}`, {
@@ -373,9 +375,34 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         background: var(--vscode-list-hoverBackground);
       }
 
+      .card.has-color {
+        border-color: var(--step-accent-border);
+        background: var(--step-accent-background);
+      }
+
+      .card.has-color:hover {
+        background:
+          linear-gradient(
+            0deg,
+            var(--vscode-list-hoverBackground),
+            var(--vscode-list-hoverBackground)
+          ),
+          var(--step-accent-background);
+      }
+
       .card.active {
         border-left: 2px solid var(--vscode-focusBorder);
         background: var(--vscode-list-inactiveSelectionBackground, transparent);
+      }
+
+      .card.has-color.active {
+        background:
+          linear-gradient(
+            0deg,
+            var(--vscode-list-inactiveSelectionBackground, transparent),
+            var(--vscode-list-inactiveSelectionBackground, transparent)
+          ),
+          var(--step-accent-background);
       }
 
       .card.complete:not(.active) {
@@ -519,6 +546,7 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       let suppressNextClick = false;
 
       const ICON_EDIT = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M13.23 1a1.77 1.77 0 0 1 1.25 3.02l-.84.84-2.5-2.5.84-.84A1.77 1.77 0 0 1 13.23 1zm-3.02 2.43L1.97 11.67 1.5 14.5l2.83-.47 8.24-8.24-2.36-2.36z"/></svg>';
+      const ICON_COLOR = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8.68 1.5 2.35 7.82a3.5 3.5 0 1 0 4.95 4.96l6.33-6.33L8.68 1.5zm-.62 10.57a2.25 2.25 0 0 1-3.18-3.18l4.95-4.95 3.18 3.18-4.95 4.95z"/><path fill="currentColor" d="M10.75 12.5c1.24 0 2.25.84 2.25 1.88 0 .34-.1.66-.29.93h-3.92c-.19-.27-.29-.6-.29-.93 0-1.04 1-1.88 2.25-1.88z"/></svg>';
       const ICON_DELETE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 8.707l3.646 3.647.708-.708L8.707 8l3.647-3.646-.708-.708L8 7.293 4.354 3.646l-.708.708L7.293 8l-3.647 3.646.708.708L8 8.707z"/></svg>';
       const ICON_MORE = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></svg>';
 
@@ -574,12 +602,16 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
           : '<span class="tag placeholder">+ tags</span>';
 
         const stateClass = [
+          step.color ? "has-color" : "",
           step.isActive ? "active" : "",
           step.isComplete ? "complete" : ""
         ].filter(Boolean).join(" ");
+        const styleAttribute = step.cardStyle
+          ? ' style="' + escapeHtml(step.cardStyle) + '"'
+          : "";
 
         return \`
-          <article class="card \${stateClass}" draggable="true"
+          <article class="card \${stateClass}" draggable="true"\${styleAttribute}
                    data-tour-id="\${escapeHtml(step.tourId)}"
                    data-step-number="\${step.stepNumber}">
             <button class="card-main"
@@ -598,6 +630,11 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
                    title="Edit tags">\${tagPills}</div>
             </button>
             <div class="card-actions">
+              <button class="icon-button"
+                      data-action="changeTourStepColor"
+                      data-tour-id="\${escapeHtml(step.tourId)}"
+                      data-step-number="\${step.stepNumber}"
+                      title="Change color">\${ICON_COLOR}</button>
               <button class="icon-button"
                       data-action="editTourAtStep"
                       data-tour-id="\${escapeHtml(step.tourId)}"

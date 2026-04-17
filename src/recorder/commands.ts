@@ -11,6 +11,7 @@ import { CodeTourComment } from "../player";
 import { CodeTour, CodeTourStep, store } from "../store";
 import {
   createPersistedTour,
+  parseColorInput,
   parseTagsInput
 } from "../store/serialization";
 import {
@@ -39,6 +40,17 @@ export async function saveTour(tour: CodeTour) {
 }
 
 export function registerRecorderCommands() {
+  const STEP_COLOR_PRESETS = [
+    { label: "Red", color: "#ef4444" },
+    { label: "Orange", color: "#f97316" },
+    { label: "Yellow", color: "#eab308" },
+    { label: "Green", color: "#22c55e" },
+    { label: "Teal", color: "#14b8a6" },
+    { label: "Blue", color: "#3b82f6" },
+    { label: "Violet", color: "#8b5cf6" },
+    { label: "Pink", color: "#ec4899" }
+  ] as const;
+
   function getTourFileUri(workspaceRoot: vscode.Uri, title: string) {
     const file = title
       .toLocaleLowerCase()
@@ -598,6 +610,66 @@ export function registerRecorderCommands() {
     return propertyValue;
   }
 
+  interface StepColorQuickPickItem extends vscode.QuickPickItem {
+    color?: string;
+    action?: "custom" | "clear";
+  }
+
+  async function promptForStepColor(
+    currentColor?: string
+  ): Promise<string | null | undefined> {
+    const items: StepColorQuickPickItem[] = STEP_COLOR_PRESETS.map(
+      ({ label, color }) => ({
+        label,
+        description: color,
+        color
+      })
+    );
+
+    items.push({
+      label: "Custom Hex...",
+      description: currentColor || "Enter #RGB or #RRGGBB",
+      action: "custom"
+    });
+
+    if (currentColor) {
+      items.push({
+        label: "Clear Color",
+        description: "Remove the sidebar color for this step",
+        action: "clear"
+      });
+    }
+
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder: "Select a sidebar color for this tour step"
+    });
+
+    if (!picked) {
+      return undefined;
+    }
+
+    if (picked.action === "clear") {
+      return null;
+    }
+
+    if (picked.action === "custom") {
+      const response = await vscode.window.showInputBox({
+        prompt: "Enter a hex color for this tour step (#RGB or #RRGGBB)",
+        value: currentColor || "",
+        validateInput: value =>
+          parseColorInput(value)
+            ? undefined
+            : "Enter a valid hex color like #3b82f6 or #abc"
+      });
+
+      return typeof response === "undefined"
+        ? undefined
+        : parseColorInput(response);
+    }
+
+    return picked.color;
+  }
+
   function moveStep(
     movement: number,
     node: StepTarget | CodeTourComment
@@ -808,6 +880,32 @@ export function registerRecorderCommands() {
         step.tags = tags;
       } else {
         delete step.tags;
+      }
+
+      saveTour(tour);
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.changeTourStepColor`,
+    async (target: StepTarget) => {
+      const resolvedTarget = resolveStep(target);
+      if (!resolvedTarget) {
+        return;
+      }
+
+      const { tour, stepNumber } = resolvedTarget;
+      const step = tour.steps[stepNumber];
+      const color = await promptForStepColor(step.color);
+
+      if (typeof color === "undefined") {
+        return;
+      }
+
+      if (color) {
+        step.color = color;
+      } else {
+        delete step.color;
       }
 
       saveTour(tour);
