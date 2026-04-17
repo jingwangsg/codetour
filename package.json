@@ -203,6 +203,10 @@
         "icon": "$(add)"
       },
       {
+        "command": "codetour.reorderTourStep",
+        "title": "Reorder Tour Step"
+      },
+      {
         "command": "codetour.resumeTour",
         "title": "Resume Tour",
         "category": "CodeTour"
@@ -334,6 +338,10 @@
         },
         {
           "command": "codetour.previousTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.reorderTourStep",
           "when": "false"
         },
         {

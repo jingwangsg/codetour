@@ -50,8 +50,7 @@ test("buildSidebarState projects tours into card sections with active, complete,
       title: step.title,
       isActive: step.isActive,
       isComplete: step.isComplete,
-      tags: step.tags,
-      contextLabel: step.contextLabel
+      tags: step.tags
     })),
     [
       {
@@ -59,22 +58,16 @@ test("buildSidebarState projects tours into card sections with active, complete,
         title: "Intro",
         isActive: false,
         isComplete: true,
-        tags: [],
-        contextLabel: "src/extension.ts"
+        tags: []
       },
       {
         stepNumber: 1,
         title: "Step #2",
         isActive: true,
         isComplete: false,
-        tags: ["Basics", "UI"],
-        contextLabel: "explorer"
+        tags: ["Basics", "UI"]
       }
     ]
-  );
-  assert.match(
-    state.tours[0].steps[1].descriptionPreview,
-    /Focus the explorer/
   );
 });
 

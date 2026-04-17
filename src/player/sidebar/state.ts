@@ -8,13 +8,9 @@ export interface SidebarStepState {
   tourId: string;
   stepNumber: number;
   title: string;
-  descriptionPreview: string;
-  contextLabel?: string;
   tags: string[];
   isActive: boolean;
   isComplete: boolean;
-  canMoveBack: boolean;
-  canMoveForward: boolean;
 }
 
 export interface SidebarTourState {
@@ -101,31 +97,9 @@ function buildStepState(
     tourId: tour.id,
     stepNumber,
     title: step.title || `Step #${stepNumber + 1}`,
-    descriptionPreview: createDescriptionPreview(step.description),
-    contextLabel: getStepContextLabel(step),
     tags: normalizeTags(step.tags) || [],
     isActive:
       activeTour?.tour.id === tour.id && activeTour.step === stepNumber,
-    isComplete: completedSteps.includes(stepNumber),
-    canMoveBack: stepNumber > 0,
-    canMoveForward: stepNumber < tour.steps.length - 1
+    isComplete: completedSteps.includes(stepNumber)
   };
-}
-
-function createDescriptionPreview(description: string): string {
-  return description.replace(/\s+/g, " ").trim();
-}
-
-function getStepContextLabel(step: CodeTourStep): string | undefined {
-  if (step.file) {
-    return step.file;
-  } else if (step.directory) {
-    return step.directory;
-  } else if (step.view) {
-    return step.view;
-  } else if (step.uri) {
-    return step.uri;
-  } else if (step.contents) {
-    return "Content step";
-  }
 }

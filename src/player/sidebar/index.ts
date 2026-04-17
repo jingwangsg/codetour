@@ -30,11 +30,16 @@ type SidebarCommandMessage =
       action:
         | "editTourAtStep"
         | "changeTourStepTags"
-        | "moveTourStepBack"
-        | "moveTourStepForward"
         | "deleteTourStep";
       tourId: string;
       stepNumber: number;
+    }
+  | {
+      type: "command";
+      action: "reorderTourStep";
+      tourId: string;
+      fromStep: number;
+      toStep: number;
     };
 
 class CodeTourSidebarProvider
@@ -104,12 +109,16 @@ class CodeTourSidebarProvider
         });
       case "editTourAtStep":
       case "changeTourStepTags":
-      case "moveTourStepBack":
-      case "moveTourStepForward":
       case "deleteTourStep":
         return vscode.commands.executeCommand(`${EXTENSION_NAME}.${message.action}`, {
           tourId: message.tourId,
           stepNumber: message.stepNumber
+        });
+      case "reorderTourStep":
+        return vscode.commands.executeCommand(`${EXTENSION_NAME}.reorderTourStep`, {
+          tourId: message.tourId,
+          fromStep: message.fromStep,
+          toStep: message.toStep
         });
     }
   }
@@ -143,15 +152,6 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
     <style>
       :root {
         color-scheme: light dark;
-        --surface: var(--vscode-sideBar-background);
-        --surface-strong: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-        --surface-active: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
-        --surface-complete: rgba(46, 160, 67, 0.12);
-        --border: var(--vscode-editorWidget-border, rgba(127, 127, 127, 0.22));
-        --border-strong: var(--vscode-focusBorder);
-        --muted: var(--vscode-descriptionForeground);
-        --accent: var(--vscode-focusBorder);
-        --shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
       }
 
       * {
@@ -161,11 +161,9 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       body {
         margin: 0;
         min-height: 100vh;
-        color: var(--vscode-sideBar-foreground);
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 24%),
-          var(--vscode-sideBar-background);
-        font: 13px/1.45 var(--vscode-font-family);
+        color: var(--vscode-sideBar-foreground, var(--vscode-foreground));
+        background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+        font: 13px/1.4 var(--vscode-font-family);
       }
 
       button {
@@ -173,39 +171,36 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       }
 
       .app {
-        padding: 14px 12px 28px;
+        padding: 8px 8px 14px;
       }
 
       .empty-state {
         display: grid;
-        gap: 12px;
-        padding: 16px;
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        background: linear-gradient(180deg, var(--surface-strong), var(--surface));
-        box-shadow: var(--shadow);
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid var(--vscode-editorWidget-border, transparent);
+        border-radius: 6px;
+        background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
       }
 
       .empty-title {
         margin: 0;
-        font-size: 16px;
-        font-weight: 700;
+        font-size: 15px;
+        font-weight: 600;
       }
 
       .empty-copy {
         margin: 0;
-        color: var(--muted);
+        color: var(--vscode-descriptionForeground);
       }
 
       .toolbar,
       .tour-actions,
-      .card-actions,
-      .meta-row,
       .summary-row,
       .tag-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
       }
 
       .toolbar {
@@ -213,22 +208,21 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       }
 
       .section {
-        margin-bottom: 14px;
-        border: 1px solid var(--border);
-        border-radius: 18px;
+        margin-bottom: 8px;
+        border: 1px solid var(--vscode-editorWidget-border, transparent);
+        border-radius: 6px;
         overflow: hidden;
-        background: linear-gradient(180deg, var(--surface-strong), var(--surface));
-        box-shadow: var(--shadow);
+        background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
       }
 
       .section[open] {
-        border-color: var(--border-strong);
+        border-color: var(--vscode-focusBorder);
       }
 
       summary {
         list-style: none;
         cursor: pointer;
-        padding: 14px 14px 10px;
+        padding: 10px 10px 6px;
       }
 
       summary::-webkit-details-marker {
@@ -242,59 +236,55 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
 
       .tour-title {
         margin: 0;
-        font-size: 15px;
-        font-weight: 700;
+        font-size: 14px;
+        font-weight: 600;
       }
 
       .tour-copy {
-        margin: 8px 0 0;
-        color: var(--muted);
-      }
-
-      .status-badge,
-      .tag,
-      .step-index {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
+        margin: 6px 0 0;
+        color: var(--vscode-descriptionForeground);
       }
 
       .status-badge {
-        border: 1px solid var(--border);
-        background: rgba(127, 127, 127, 0.12);
-      }
-
-      .status-badge.active {
-        border-color: var(--accent);
-        background: rgba(80, 140, 255, 0.18);
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 7px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        background: var(--vscode-badge-background);
+        color: var(--vscode-badge-foreground);
+        border: 1px solid transparent;
       }
 
       .status-badge.primary {
-        border-color: var(--vscode-terminal-ansiYellow);
-        background: rgba(255, 200, 56, 0.18);
+        background: transparent;
+        border-color: var(--vscode-focusBorder);
+        color: var(--vscode-descriptionForeground);
+      }
+
+      .status-badge.active {
+        background: transparent;
+        border-color: var(--vscode-focusBorder);
+        color: var(--vscode-focusBorder);
       }
 
       .tour-actions {
-        padding: 0 14px 14px;
+        padding: 0 10px 10px;
       }
 
       .button {
-        border: 1px solid var(--border);
-        border-radius: 999px;
-        padding: 5px 10px;
+        border: 1px solid var(--vscode-button-border, transparent);
+        border-radius: 3px;
+        padding: 3px 8px;
         color: inherit;
-        background: rgba(127, 127, 127, 0.1);
+        background: transparent;
         cursor: pointer;
       }
 
       .button:hover:not(:disabled) {
-        border-color: var(--border-strong);
         background: var(--vscode-list-hoverBackground);
       }
 
@@ -305,82 +295,160 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
 
       .cards {
         display: grid;
-        gap: 12px;
-        padding: 0 14px 14px;
+        gap: 4px;
+        padding: 0 10px 10px;
       }
 
       .card {
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%), var(--surface);
-        overflow: hidden;
+        position: relative;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: transparent;
+        display: flex;
+        align-items: stretch;
+        gap: 2px;
+      }
+
+      .card[draggable="true"] {
+        cursor: grab;
+      }
+
+      .card:hover {
+        background: var(--vscode-list-hoverBackground);
       }
 
       .card.active {
-        border-color: var(--accent);
-        background: linear-gradient(180deg, rgba(80, 140, 255, 0.08), transparent 22%), var(--surface-active);
+        border-left: 2px solid var(--vscode-focusBorder);
+        background: var(--vscode-list-inactiveSelectionBackground, transparent);
       }
 
       .card.complete:not(.active) {
-        background: linear-gradient(180deg, rgba(46, 160, 67, 0.08), transparent 22%), var(--surface-complete);
+        opacity: 0.65;
+      }
+
+      .card.dragging {
+        opacity: 0.4;
+      }
+
+      .card.drop-before {
+        border-top: 2px solid var(--vscode-focusBorder);
+      }
+
+      .card.drop-after {
+        border-bottom: 2px solid var(--vscode-focusBorder);
       }
 
       .card-main {
-        width: 100%;
-        padding: 14px 14px 10px;
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 4px 6px;
         border: 0;
         color: inherit;
         text-align: left;
         background: transparent;
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
       }
 
-      .card-title {
-        margin: 8px 0 0;
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      .card-copy {
-        margin: 8px 0 0;
-        color: var(--muted);
-        display: -webkit-box;
-        overflow: hidden;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
-      }
-
-      .meta-row {
-        align-items: center;
+      .card-header {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        min-width: 0;
       }
 
       .step-index {
-        border: 1px solid var(--border);
-        background: rgba(127, 127, 127, 0.1);
+        color: var(--vscode-descriptionForeground);
+        font-size: 11px;
+        font-weight: 600;
+        flex: 0 0 auto;
       }
 
-      .context {
-        color: var(--muted);
-        font-size: 12px;
+      .card-title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+
+      .tag-row {
+        cursor: pointer;
+        padding: 1px 0 0;
+        margin: 0;
       }
 
       .tag {
-        border: 1px solid rgba(80, 140, 255, 0.35);
-        background: rgba(80, 140, 255, 0.14);
-        text-transform: none;
-        letter-spacing: normal;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 6px;
+        border-radius: 999px;
+        font-size: 10px;
+        line-height: 16px;
+        background: var(--vscode-badge-background);
+        color: var(--vscode-badge-foreground);
+        border: 1px solid transparent;
+      }
+
+      .tag.placeholder {
+        background: transparent;
+        color: var(--vscode-descriptionForeground);
+        border: 1px dashed var(--vscode-descriptionForeground);
+        opacity: 0.55;
+      }
+
+      .tag-row:hover .tag:not(.placeholder) {
+        border-color: var(--vscode-focusBorder);
+      }
+
+      .tag-row:hover .tag.placeholder {
+        opacity: 1;
       }
 
       .card-actions {
-        padding: 0 14px 14px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 2px 4px;
+        flex: 0 0 auto;
+      }
+
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: 0;
+        border-radius: 3px;
+        background: transparent;
+        color: var(--vscode-icon-foreground, inherit);
+        cursor: pointer;
+        opacity: 0.65;
+      }
+
+      .icon-button:hover {
+        opacity: 1;
+        background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+      }
+
+      .icon-button svg {
+        width: 14px;
+        height: 14px;
+        display: block;
       }
 
       .empty-tour {
-        margin: 0 14px 14px;
-        padding: 14px;
-        border: 1px dashed var(--border);
-        border-radius: 14px;
-        color: var(--muted);
+        margin: 0 10px 10px;
+        padding: 10px;
+        border: 1px dashed var(--vscode-editorWidget-border, var(--vscode-descriptionForeground));
+        border-radius: 4px;
+        color: var(--vscode-descriptionForeground);
       }
     </style>
   </head>
@@ -391,6 +459,11 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       const app = document.getElementById("app");
       let sidebarState = ${initialState};
       let expandedTourIds = new Set((vscode.getState() || {}).expandedTourIds || []);
+      let dragState = null;
+      let suppressNextClick = false;
+
+      const ICON_EDIT = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M13.23 1a1.77 1.77 0 0 1 1.25 3.02l-.84.84-2.5-2.5.84-.84A1.77 1.77 0 0 1 13.23 1zm-3.02 2.43L1.97 11.67 1.5 14.5l2.83-.47 8.24-8.24-2.36-2.36z"/></svg>';
+      const ICON_DELETE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 8.707l3.646 3.647.708-.708L8.707 8l3.647-3.646-.708-.708L8 7.293 4.354 3.646l-.708.708L7.293 8l-3.647 3.646.708.708L8 8.707z"/></svg>';
 
       function escapeHtml(value) {
         return String(value)
@@ -481,55 +554,45 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       }
 
       function renderCard(step) {
-        const statusBadges = [
-          step.isActive ? '<span class="status-badge active">Active</span>' : "",
-          !step.isActive && step.isComplete ? '<span class="status-badge">Done</span>' : ""
-        ].join("");
+        const tagPills = step.tags.length
+          ? step.tags.map(tag => '<span class="tag">' + escapeHtml(tag) + "</span>").join("")
+          : '<span class="tag placeholder">+ tags</span>';
 
-        const tags = step.tags
-          .map(tag => '<span class="tag">' + escapeHtml(tag) + "</span>")
-          .join("");
+        const stateClass = [
+          step.isActive ? "active" : "",
+          step.isComplete ? "complete" : ""
+        ].filter(Boolean).join(" ");
 
         return \`
-          <article class="card \${step.isActive ? "active" : ""} \${step.isComplete ? "complete" : ""}">
-            <button
-              class="card-main"
-              data-action="startTour"
-              data-tour-id="\${escapeHtml(step.tourId)}"
-              data-step-number="\${step.stepNumber}"
-            >
-              <div class="meta-row">
-                <span class="step-index">Step #\${step.stepNumber + 1}</span>
-                \${statusBadges}
+          <article class="card \${stateClass}" draggable="true"
+                   data-tour-id="\${escapeHtml(step.tourId)}"
+                   data-step-number="\${step.stepNumber}">
+            <button class="card-main"
+                    data-action="startTour"
+                    data-tour-id="\${escapeHtml(step.tourId)}"
+                    data-step-number="\${step.stepNumber}">
+              <div class="card-header">
+                <span class="step-index">#\${step.stepNumber + 1}</span>
+                <h3 class="card-title">\${escapeHtml(step.title)}</h3>
               </div>
-              <h3 class="card-title">\${escapeHtml(step.title)}</h3>
-              \${step.contextLabel ? '<div class="context">' + escapeHtml(step.contextLabel) + "</div>" : ""}
-              \${step.descriptionPreview ? '<p class="card-copy">' + escapeHtml(step.descriptionPreview) + "</p>" : ""}
-              \${tags ? '<div class="tag-row">' + tags + "</div>" : ""}
+              <div class="tag-row"
+                   data-action="changeTourStepTags"
+                   data-tour-id="\${escapeHtml(step.tourId)}"
+                   data-step-number="\${step.stepNumber}"
+                   role="button"
+                   title="Edit tags">\${tagPills}</div>
             </button>
             <div class="card-actions">
-              \${renderButton("Edit", "editTourAtStep", {
-                "data-tour-id": step.tourId,
-                "data-step-number": step.stepNumber
-              })}
-              \${renderButton("Tags", "changeTourStepTags", {
-                "data-tour-id": step.tourId,
-                "data-step-number": step.stepNumber
-              })}
-              \${renderButton("Up", "moveTourStepBack", {
-                "data-tour-id": step.tourId,
-                "data-step-number": step.stepNumber,
-                disabled: !step.canMoveBack
-              })}
-              \${renderButton("Down", "moveTourStepForward", {
-                "data-tour-id": step.tourId,
-                "data-step-number": step.stepNumber,
-                disabled: !step.canMoveForward
-              })}
-              \${renderButton("Delete", "deleteTourStep", {
-                "data-tour-id": step.tourId,
-                "data-step-number": step.stepNumber
-              })}
+              <button class="icon-button"
+                      data-action="editTourAtStep"
+                      data-tour-id="\${escapeHtml(step.tourId)}"
+                      data-step-number="\${step.stepNumber}"
+                      title="Edit step">\${ICON_EDIT}</button>
+              <button class="icon-button"
+                      data-action="deleteTourStep"
+                      data-tour-id="\${escapeHtml(step.tourId)}"
+                      data-step-number="\${step.stepNumber}"
+                      title="Delete step">\${ICON_DELETE}</button>
             </div>
           </article>
         \`;
@@ -547,7 +610,7 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
             <summary>
               <div class="summary-row">
                 <h2 class="tour-title">\${escapeHtml(tour.title)}</h2>
-                <div class="meta-row">\${badges}</div>
+                <div class="summary-row">\${badges}</div>
               </div>
               \${tour.description ? '<p class="tour-copy">' + escapeHtml(tour.description) + "</p>" : ""}
             </summary>
@@ -592,6 +655,79 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         });
       }
 
+      function clearDropIndicators() {
+        app.querySelectorAll(".card.drop-before, .card.drop-after").forEach(el => {
+          el.classList.remove("drop-before", "drop-after");
+        });
+      }
+
+      function bindCardDragHandlers() {
+        app.querySelectorAll(".card[draggable='true']").forEach(card => {
+          const tourId = card.dataset.tourId;
+          const fromStep = Number(card.dataset.stepNumber);
+
+          card.addEventListener("dragstart", event => {
+            dragState = { tourId, fromStep };
+            card.classList.add("dragging");
+            if (event.dataTransfer) {
+              event.dataTransfer.effectAllowed = "move";
+              try { event.dataTransfer.setData("text/plain", String(fromStep)); } catch (e) {}
+            }
+          });
+
+          card.addEventListener("dragend", () => {
+            card.classList.remove("dragging");
+            clearDropIndicators();
+            dragState = null;
+            suppressNextClick = true;
+            setTimeout(() => { suppressNextClick = false; }, 0);
+          });
+
+          card.addEventListener("dragover", event => {
+            if (!dragState || dragState.tourId !== tourId) {
+              return;
+            }
+            event.preventDefault();
+            const rect = card.getBoundingClientRect();
+            const before = (event.clientY - rect.top) < rect.height / 2;
+            clearDropIndicators();
+            card.classList.add(before ? "drop-before" : "drop-after");
+            if (event.dataTransfer) {
+              event.dataTransfer.dropEffect = "move";
+            }
+          });
+
+          card.addEventListener("dragleave", event => {
+            if (!card.contains(event.relatedTarget)) {
+              card.classList.remove("drop-before", "drop-after");
+            }
+          });
+
+          card.addEventListener("drop", event => {
+            if (!dragState || dragState.tourId !== tourId) {
+              return;
+            }
+            event.preventDefault();
+            const rect = card.getBoundingClientRect();
+            const before = (event.clientY - rect.top) < rect.height / 2;
+            let toStep = fromStep + (before ? 0 : 1);
+            if (dragState.fromStep < toStep) {
+              toStep -= 1;
+            }
+            clearDropIndicators();
+            if (toStep !== dragState.fromStep) {
+              vscode.postMessage({
+                type: "command",
+                action: "reorderTourStep",
+                tourId: dragState.tourId,
+                fromStep: dragState.fromStep,
+                toStep
+              });
+            }
+          });
+        });
+      }
+
       function render(state) {
         sidebarState = state;
         ensureExpandedDefaults(state);
@@ -603,15 +739,22 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
 
         app.innerHTML = state.tours.map(renderTour).join("");
         bindSectionToggles();
+        bindCardDragHandlers();
       }
 
       app.addEventListener("click", event => {
+        if (suppressNextClick) {
+          return;
+        }
+
         const target = event.target.closest("[data-action]");
         if (!target || target.disabled) {
           return;
         }
 
-        vscode.postMessage({
+        event.stopPropagation();
+
+        const payload = {
           type: "command",
           action: target.dataset.action,
           tourId: target.dataset.tourId,
@@ -619,7 +762,9 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
             target.dataset.stepNumber === undefined
               ? undefined
               : Number(target.dataset.stepNumber)
-        });
+        };
+
+        vscode.postMessage(payload);
       });
 
       window.addEventListener("message", event => {

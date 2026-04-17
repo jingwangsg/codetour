@@ -647,6 +647,55 @@ export function registerRecorderCommands() {
   );
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.reorderTourStep`,
+    (target: { tourId: string; fromStep: number; toStep: number }) => {
+      if (
+        !target ||
+        typeof target.fromStep !== "number" ||
+        typeof target.toStep !== "number"
+      ) {
+        return;
+      }
+
+      const tour = resolveTour({ tourId: target.tourId });
+      if (!tour) {
+        return;
+      }
+
+      const { fromStep } = target;
+      const toStep = Math.max(
+        0,
+        Math.min(tour.steps.length - 1, target.toStep)
+      );
+      if (
+        fromStep < 0 ||
+        fromStep >= tour.steps.length ||
+        fromStep === toStep
+      ) {
+        return;
+      }
+
+      runInAction(async () => {
+        const [step] = tour.steps.splice(fromStep, 1);
+        tour.steps.splice(toStep, 0, step);
+
+        if (store.activeTour && store.activeTour.tour.id === tour.id) {
+          const active = store.activeTour.step;
+          if (active === fromStep) {
+            store.activeTour.step = toStep;
+          } else if (fromStep < active && toStep >= active) {
+            store.activeTour.step = active - 1;
+          } else if (fromStep > active && toStep <= active) {
+            store.activeTour.step = active + 1;
+          }
+        }
+
+        await saveTour(tour);
+      });
+    }
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourDescription`,
     async (target: TourTarget) => {
       const tour = resolveTour(target);
