@@ -42,6 +42,7 @@ export interface CodeTour {
   id: string;
   title: string;
   description?: string;
+  overview?: string;
   steps: CodeTourStep[];
   ref?: string;
   isPrimary?: boolean;

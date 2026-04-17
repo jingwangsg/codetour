@@ -18,6 +18,7 @@ import {
 import { progress } from "../store/storage";
 import { resolveTour, TourTarget } from "../targets";
 import { readUriContents } from "../utils";
+import { openTourOverview } from "./overview";
 
 let terminal: vscode.Terminal | null;
 export function registerPlayerCommands() {
@@ -178,6 +179,40 @@ export function registerPlayerCommands() {
 
       const tourUri = vscode.Uri.parse(tour.id);
       vscode.window.showTextDocument(tourUri);
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.viewTourEntryDocument`,
+    async (target?: TourTarget) => {
+      const tour = target ? resolveTour(target) : undefined;
+      if (tour) {
+        return openTourOverview(tour);
+      }
+
+      const pickable = store.tours.map(tour => ({
+        label: tour.title,
+        description: tour.description,
+        tour
+      }));
+
+      if (pickable.length === 0) {
+        vscode.window.showInformationMessage(
+          "No tours available to display an overview for."
+        );
+        return;
+      }
+
+      if (pickable.length === 1) {
+        return openTourOverview(pickable[0].tour);
+      }
+
+      const picked = await vscode.window.showQuickPick(pickable, {
+        placeHolder: "Select a tour to view its entry document"
+      });
+      if (picked) {
+        openTourOverview(picked.tour);
+      }
     }
   );
 

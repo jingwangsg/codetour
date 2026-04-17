@@ -240,6 +240,12 @@
         "command": "codetour.viewNotebook",
         "title": "View Notebook",
         "category": "CodeTour"
+      },
+      {
+        "command": "codetour.viewTourEntryDocument",
+        "title": "View Tour Entry Document",
+        "category": "CodeTour",
+        "icon": "$(book)"
       }
     ],
     "menus": {
@@ -371,6 +377,10 @@
         {
           "command": "codetour.viewNotebook",
           "when": "false"
+        },
+        {
+          "command": "codetour.viewTourEntryDocument",
+          "when": "codetour:hasTours"
         }
       ],
       "comments/commentThread/title": [
@@ -544,6 +554,7 @@
     "@types/jexl": "^2.2.0",
     "axios": "^0.21.4",
     "jexl": "^2.3.0",
+    "marked": "^12.0.2",
     "mobx": "^5.14.2",
     "os-browserify": "0.3.0",
     "path-browserify": "1.0.1",

@@ -15,6 +15,7 @@ type SidebarCommandMessage =
         | "startTour"
         | "editTour"
         | "previewTour"
+        | "viewTourEntryDocument"
         | "changeTourTitle"
         | "changeTourDescription"
         | "changeTourRef"
@@ -99,6 +100,7 @@ class CodeTourSidebarProvider
         );
       case "editTour":
       case "previewTour":
+      case "viewTourEntryDocument":
       case "changeTourTitle":
       case "changeTourDescription":
       case "changeTourRef":
@@ -161,6 +163,10 @@ class CodeTourSidebarProvider
     items.push({
       label: tour.isEditing ? "$(preview) Preview Tour" : "$(edit) Edit Tour",
       run: () => run(tour.isEditing ? "previewTour" : "editTour")
+    });
+    items.push({
+      label: "$(book) View Overview",
+      run: () => run("viewTourEntryDocument")
     });
     items.push({ label: "$(pencil) Change Title", run: () => run("changeTourTitle") });
     items.push({ label: "$(note) Change Description", run: () => run("changeTourDescription") });

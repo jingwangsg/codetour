@@ -37,6 +37,7 @@ import { registerPlayerCommands } from "./commands";
 import { registerDecorators } from "./decorator";
 import { registerFileSystemProvider } from "./fileSystem";
 import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
+import { registerOverviewModule } from "./overview";
 import { registerSidebarViewProvider } from "./sidebar";
 import { registerStatusBar } from "./status";
 
@@ -443,6 +444,7 @@ export function registerPlayerModule(context: ExtensionContext) {
   registerStatusBar();
   registerDecorators();
   registerCodeStatusModule();
+  registerOverviewModule(context);
 
   initializeStorage(context);
 
