@@ -5,6 +5,8 @@ const { loadTsModule } = require("./helpers/load-ts-module.cjs");
 const {
   CODETOUR_SCHEMA_URL,
   createPersistedTour,
+  normalizeColor,
+  parseColorInput,
   normalizeTags,
   parseTagsInput
 } = loadTsModule("./src/store/serialization.ts");
@@ -27,7 +29,20 @@ test("parseTagsInput splits comma-separated tag input", () => {
   assert.equal(parseTagsInput("   "), undefined);
 });
 
-test("createPersistedTour strips runtime fields, legacy group metadata, and empty tags", () => {
+test("normalizeColor expands short hex and lowercases full hex", () => {
+  assert.equal(normalizeColor("#AbC"), "#aabbcc");
+  assert.equal(normalizeColor("  #A1B2C3 "), "#a1b2c3");
+  assert.equal(normalizeColor("blue"), undefined);
+  assert.equal(normalizeColor("#abcd"), undefined);
+});
+
+test("parseColorInput trims values and rejects blanks", () => {
+  assert.equal(parseColorInput("  #F0A "), "#ff00aa");
+  assert.equal(parseColorInput("   "), undefined);
+  assert.equal(parseColorInput("#12"), undefined);
+});
+
+test("createPersistedTour strips runtime fields, legacy group metadata, and normalizes tags and colors", () => {
   const persisted = createPersistedTour({
     id: "tour-1",
     title: "Demo Tour",
@@ -37,11 +52,13 @@ test("createPersistedTour strips runtime fields, legacy group metadata, and empt
         description: "Hello world",
         group: "Basics/Explorer",
         markerTitle: "CT 1.1",
-        tags: ["  basics ", " ", "ui"]
+        tags: ["  basics ", " ", "ui"],
+        color: " #AbC "
       },
       {
         description: "Second step",
-        tags: []
+        tags: [],
+        color: "not-a-color"
       }
     ]
   });
@@ -52,7 +69,8 @@ test("createPersistedTour strips runtime fields, legacy group metadata, and empt
     {
       title: "Intro",
       description: "Hello world",
-      tags: ["basics", "ui"]
+      tags: ["basics", "ui"],
+      color: "#aabbcc"
     },
     {
       description: "Second step"

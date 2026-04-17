@@ -223,6 +223,7 @@ Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour f
   - `pattern` - A regular expression to associate the step with. This is only considered when the `line` property isn't set, and allows you to associate steps with line content as opposed to ordinal.
   - `title` - An optional title, which will be displayed as the step name in the `CodeTour` Explorer view.
   - `tags` - An optional array of free-form tags that will be rendered as chips on the step card in the `CodeTour` Explorer view.
+  - `color` - An optional hex color (`#RGB` or `#RRGGBB`) that will tint the step card in the `CodeTour` Explorer view.
   - `commands` - An array of VS Code command strings, that indicate the name of a command (e.g. `codetour.endTour`) and any optional parameters to pass to it, specified as a query string array (eg. `codetour.endTour?[2]`).
   - `view` - The ID of a VS Code view that will be automatically focused when this step is navigated to.
 
@@ -329,7 +330,7 @@ The following sections describe the VS Code integrations that the CodeTour exten
 
 ### Tree View
 
-If the currently opened workspace has any code tours, or you're actively taking/recording a tour, you'll see a `CodeTour` view in the `Explorer` tab. This view organizes tours into collapsible sections and renders each step as a card, so you can jump directly to a step, edit it, change its tags, re-order it, or delete it without the old one-line step list. Tags are displayed on each card as lightweight chips, and the active/completed state stays in sync with playback.
+If the currently opened workspace has any code tours, or you're actively taking/recording a tour, you'll see a `CodeTour` view in the `Explorer` tab. This view organizes tours into collapsible sections and renders each step as a card, so you can jump directly to a step, edit it, change its color or tags, re-order it, or delete it without the old one-line step list. Tags are displayed on each card as lightweight chips, optional step colors tint the card background, and the active/completed state stays in sync with playback.
 
 <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 

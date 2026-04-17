@@ -88,6 +88,11 @@
               "type": "string"
             }
           },
+          "color": {
+            "type": "string",
+            "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+            "description": "An optional hex color used to tint the step card in the CodeTour Explorer view."
+          },
           "description": {
             "type": "string",
             "description": "Description of the step."

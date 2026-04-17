@@ -110,6 +110,10 @@
         "title": "Change Tags"
       },
       {
+        "command": "codetour.changeTourStepColor",
+        "title": "Change Color"
+      },
+      {
         "command": "codetour.changeTourTitle",
         "title": "Change Title"
       },
@@ -290,6 +294,10 @@
         },
         {
           "command": "codetour.changeTourStepIcon",
+          "when": "false"
+        },
+        {
+          "command": "codetour.changeTourStepColor",
           "when": "false"
         },
         {

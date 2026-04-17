@@ -2,13 +2,15 @@
 // Licensed under the MIT License.
 
 import type { ActiveTour, CodeTour, CodeTourStep, Store } from "../../store";
-import { normalizeTags } from "../../store/serialization";
+import { normalizeColor, normalizeTags } from "../../store/serialization";
 
 export interface SidebarStepState {
   tourId: string;
   stepNumber: number;
   title: string;
   tags: string[];
+  color?: string;
+  cardStyle?: string;
   isActive: boolean;
   isComplete: boolean;
 }
@@ -93,13 +95,29 @@ function buildStepState(
   activeTour: ActiveTour | null,
   completedSteps: number[]
 ): SidebarStepState {
+  const color = normalizeColor(step.color);
+
   return {
     tourId: tour.id,
     stepNumber,
     title: step.title || `Step #${stepNumber + 1}`,
     tags: normalizeTags(step.tags) || [],
+    color,
+    cardStyle: buildCardStyle(color),
     isActive:
       activeTour?.tour.id === tour.id && activeTour.step === stepNumber,
     isComplete: completedSteps.includes(stepNumber)
   };
+}
+
+function buildCardStyle(color?: string): string | undefined {
+  if (!color) {
+    return undefined;
+  }
+
+  const red = parseInt(color.slice(1, 3), 16);
+  const green = parseInt(color.slice(3, 5), 16);
+  const blue = parseInt(color.slice(5, 7), 16);
+
+  return `--step-accent-color:${color};--step-accent-background:rgba(${red}, ${green}, ${blue}, 0.18);--step-accent-border:rgba(${red}, ${green}, ${blue}, 0.42);`;
 }

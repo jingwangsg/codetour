@@ -23,6 +23,31 @@ export function parseTagsInput(input: string): string[] | undefined {
   return normalizeTags(input.split(","));
 }
 
+export function normalizeColor(color?: string): string | undefined {
+  if (!color) {
+    return undefined;
+  }
+
+  const normalizedColor = color.trim().toLowerCase();
+  if (/^#[0-9a-f]{3}$/.test(normalizedColor)) {
+    return `#${normalizedColor
+      .slice(1)
+      .split("")
+      .map(char => char + char)
+      .join("")}`;
+  }
+
+  if (/^#[0-9a-f]{6}$/.test(normalizedColor)) {
+    return normalizedColor;
+  }
+
+  return undefined;
+}
+
+export function parseColorInput(input: string): string | undefined {
+  return normalizeColor(input);
+}
+
 export function sanitizeStepForPersistence(
   step: CodeTourStep
 ): Omit<CodeTourStep, "markerTitle"> {
@@ -38,6 +63,13 @@ export function sanitizeStepForPersistence(
     sanitizedStep.tags = normalizedTags;
   } else {
     delete sanitizedStep.tags;
+  }
+
+  const normalizedColor = normalizeColor(step.color);
+  if (normalizedColor) {
+    sanitizedStep.color = normalizedColor;
+  } else {
+    delete sanitizedStep.color;
   }
 
   return sanitizedStep as Omit<CodeTourStep, "markerTitle">;
