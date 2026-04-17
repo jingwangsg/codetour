@@ -12,6 +12,10 @@
       "type": "string",
       "description": "Specifies an optional description for the code tour."
     },
+    "overview": {
+      "type": "string",
+      "description": "Optional long-form markdown document that introduces the tour as a whole. Rendered by the 'CodeTour: View Tour Entry Document' command. Supports step references of the form [#N] or [Tour Title#N]."
+    },
     "ref": {
       "type": "string",
       "description": "Indicates the git ref (branch/commit/tag) that this tour associate with."
