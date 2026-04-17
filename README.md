@@ -222,6 +222,7 @@ Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour f
   - `line` - The 1-based line number that this step is associated with
   - `pattern` - A regular expression to associate the step with. This is only considered when the `line` property isn't set, and allows you to associate steps with line content as opposed to ordinal.
   - `title` - An optional title, which will be displayed as the step name in the `CodeTour` tree view.
+  - `group` - An optional slash-delimited group path (for example, `Basics/Explorer`) that controls how the step is organized within the `CodeTour` tree view. This only affects sidebar presentation; the tour still plays back in the original `steps` array order.
   - `commands` - An array of VS Code command strings, that indicate the name of a command (e.g. `codetour.endTour`) and any optional parameters to pass to it, specified as a query string array (eg. `codetour.endTour?[2]`).
   - `view` - The ID of a VS Code view that will be automatically focused when this step is navigated to.
 
@@ -328,7 +329,7 @@ The following sections describe the VS Code integrations that the CodeTour exten
 
 ### Tree View
 
-If the currently opened workspace has any code tours, or you're actively taking/recording a tour, you'll see a new tree view called `CodeTour`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `CodeTour: Start Tour` command. However, you can also expand a tour and start it at a specific step, edit/delete steps, re-order steps, and change the tour's description/title/git ref.
+If the currently opened workspace has any code tours, or you're actively taking/recording a tour, you'll see a new tree view called `CodeTour`, that's added to the `Explorer` tab. This view lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `CodeTour: Start Tour` command. However, you can also expand a tour and start it at a specific step, edit/delete steps, re-order steps, and change the tour's description/title/git ref. If a step includes a `group` value, the tree view will render slash-delimited paths like `Basics/Explorer` as nested, collapsible groups inside the tour.
 
 <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 

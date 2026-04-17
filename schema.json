@@ -81,6 +81,10 @@
             "type": "string",
             "description": "An optional title for the step."
           },
+          "group": {
+            "type": "string",
+            "description": "An optional slash-delimited group path (for example, \"Basics/Explorer\") that controls how the step is organized within the CodeTour tree view."
+          },
           "description": {
             "type": "string",
             "description": "Description of the step."

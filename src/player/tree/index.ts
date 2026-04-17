@@ -14,7 +14,8 @@ import {
 import { EXTENSION_NAME } from "../../constants";
 import { generatePreviewContent } from "..";
 import { store } from "../../store";
-import { CodeTourNode, CodeTourStepNode } from "./nodes";
+import { CodeTourNode, CodeTourStepGroupNode, CodeTourStepNode } from "./nodes";
+import { buildTourTree, findGroupChildren } from "./model";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -39,6 +40,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
               store.activeTour.tour.description,
               store.activeTour.tour.steps.map(step => [
                 step.title,
+                step.group,
                 step.markerTitle,
                 step.description
               ])
@@ -89,15 +91,25 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
         return [item];
       } else {
-        return element.tour.steps.map(
-          (_, index) => new CodeTourStepNode(element.tour, index)
-        );
+        return this.getTourTreeItems(element.tour);
       }
+    } else if (element instanceof CodeTourStepGroupNode) {
+      return this.getTourTreeItems(element.tour, element.groupPath);
     }
   }
 
   async getParent(element: TreeItem): Promise<TreeItem | null> {
     if (element instanceof CodeTourStepNode) {
+      if (element.parentGroupPath) {
+        return new CodeTourStepGroupNode(element.tour, element.parentGroupPath);
+      }
+
+      return new CodeTourNode(element.tour, this.extensionPath);
+    } else if (element instanceof CodeTourStepGroupNode) {
+      if (element.parentGroupPath) {
+        return new CodeTourStepGroupNode(element.tour, element.parentGroupPath);
+      }
+
       return new CodeTourNode(element.tour, this.extensionPath);
     } else {
       return null;
@@ -125,6 +137,17 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   dispose() {
     this._disposables.forEach(disposable => disposable.dispose());
   }
+
+  private getTourTreeItems(tour: CodeTourNode["tour"], groupPath?: string) {
+    const tree = buildTourTree(tour);
+    const items = findGroupChildren(tree, groupPath);
+
+    return items.map(item =>
+      item.kind === "group"
+        ? new CodeTourStepGroupNode(tour, item.path)
+        : new CodeTourStepNode(tour, item.stepNumber)
+    );
+  }
 }
 
 export function registerTreeProvider(extensionPath: string) {
@@ -145,9 +168,9 @@ export function registerTreeProvider(extensionPath: string) {
 
   function revealCurrentStepNode() {
     setTimeout(() => {
-      treeView.reveal(
-        new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step)
-      );
+      treeView.reveal(new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step), {
+        expand: true
+      });
     }, 300);
   }
 
@@ -156,7 +179,7 @@ export function registerTreeProvider(extensionPath: string) {
       store.activeTour
         ? [
             store.activeTour.tour.title,
-            store.activeTour.tour.steps.map(step => [step.title]),
+            store.activeTour.tour.steps.map(step => [step.title, step.group]),
             store.activeTour.step
           ]
         : null

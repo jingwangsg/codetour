@@ -12,6 +12,7 @@ import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../../constants";
 import { CodeTour, store } from "../../store";
 import { progress } from "../../store/storage";
 import { getFileUri, getStepLabel, getWorkspaceUri } from "../../utils";
+import { getParentGroupPath, getStepGroupPath, isStepInGroupPath } from "./model";
 
 function isRecording(tour: CodeTour) {
   return (
@@ -56,6 +57,7 @@ export class CodeTourNode extends TreeItem {
     }
 
     this.contextValue = contextValues.join(".");
+    this.id = `${tour.id}:tour`;
 
     this.iconPath = isRecording(tour)
       ? new ThemeIcon("record")
@@ -67,11 +69,32 @@ export class CodeTourNode extends TreeItem {
   }
 }
 
+export class CodeTourStepGroupNode extends TreeItem {
+  public readonly parentGroupPath?: string;
+
+  constructor(public tour: CodeTour, public groupPath: string) {
+    super(
+      groupPath.split("/").pop()!,
+      isActiveGroup(tour, groupPath)
+        ? TreeItemCollapsibleState.Expanded
+        : TreeItemCollapsibleState.Collapsed
+    );
+
+    this.parentGroupPath = getParentGroupPath(groupPath);
+    this.contextValue = "codetour.tourGroup";
+    this.iconPath = ThemeIcon.Folder;
+    this.id = `${tour.id}:group:${groupPath}`;
+  }
+}
+
 export class CodeTourStepNode extends TreeItem {
+  public readonly parentGroupPath?: string;
+
   constructor(public tour: CodeTour, public stepNumber: number) {
     super(getStepLabel(tour, stepNumber));
 
     const step = tour.steps[stepNumber];
+    this.parentGroupPath = getStepGroupPath(tour, stepNumber);
 
     let workspaceRoot, tours;
     if (store.activeTour && store.activeTour.tour.id === tour.id) {
@@ -149,5 +172,15 @@ export class CodeTourStepNode extends TreeItem {
     }
 
     this.contextValue = contextValues.join(".");
+    this.id = `${tour.id}:step:${stepNumber}`;
   }
+}
+
+function isActiveGroup(tour: CodeTour, groupPath: string) {
+  return !!(
+    store.activeTour &&
+    store.activeTour.tour.id === tour.id &&
+    store.activeTour.step >= 0 &&
+    isStepInGroupPath(tour, store.activeTour.step, groupPath)
+  );
 }

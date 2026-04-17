@@ -13,6 +13,7 @@ export interface CodeTourStep {
   title?: string;
   description: string;
   icon?: string;
+  group?: string;
 
   // If any of the following are set, then only
   // one of them can be, since these properties
