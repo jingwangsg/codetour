@@ -73,3 +73,45 @@ test("rejects out-of-range step numbers", () => {
   const input = "Bad [#42] reference.";
   assert.equal(transformStepReferences(input, tour, siblings), input);
 });
+
+test("leaves [#N] inside inline code spans literal", () => {
+  const input = "Use `[#1]` here.";
+  assert.equal(transformStepReferences(input, tour, siblings), input);
+});
+
+test("leaves [#N] inside fenced code blocks literal", () => {
+  const input =
+    "See [#1] outside.\n\n```js\n// Reference format is [#2], [#3], ...\n```\n";
+  const out = transformStepReferences(input, tour, siblings);
+  // Outside reference must be transformed.
+  assert.match(out, /data-step="1"[^>]*>#1<\/a>/);
+  // Inside-fence references must remain literal.
+  assert.ok(
+    out.includes("// Reference format is [#2], [#3], ..."),
+    `expected fenced content to remain literal, got: ${out}`
+  );
+  assert.ok(!out.includes('data-step="2"'));
+  assert.ok(!out.includes('data-step="3"'));
+});
+
+test("handles multiple backtick-run lengths", () => {
+  const input = "Outside [#1]. Inline ``code with ` and [#2] inside`` tail.";
+  const out = transformStepReferences(input, tour, siblings);
+  assert.match(out, /data-step="1"[^>]*>#1<\/a>/);
+  assert.ok(
+    out.includes("``code with ` and [#2] inside``"),
+    `expected double-backtick span to stay literal, got: ${out}`
+  );
+  assert.ok(!out.includes('data-step="2"'));
+});
+
+test("handles tilde-fenced blocks", () => {
+  const input = "Outside [#1].\n\n~~~\n[#2] should stay literal\n~~~\n";
+  const out = transformStepReferences(input, tour, siblings);
+  assert.match(out, /data-step="1"[^>]*>#1<\/a>/);
+  assert.ok(
+    out.includes("[#2] should stay literal"),
+    `expected tilde fence to stay literal, got: ${out}`
+  );
+  assert.ok(!out.includes('data-step="2"'));
+});

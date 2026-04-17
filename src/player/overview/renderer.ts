@@ -27,49 +27,208 @@ function findTourByTitle(
   return siblings.find(tour => tour.title.trim() === trimmed);
 }
 
+interface MarkdownSegment {
+  text: string;
+  protected: boolean;
+}
+
+/**
+ * Split markdown into alternating (transformable | protected) segments so
+ * downstream transforms do not touch inline code spans or fenced code blocks.
+ *
+ * Protected regions:
+ * - Fenced code blocks opened by ``` or ~~~ at the start of a line (after
+ *   optional whitespace), closed by a run of the same fence character of at
+ *   least the opening length at the start of a line.
+ * - Inline code spans: a run of N backticks opens a span that closes at the
+ *   next run of exactly N backticks (GFM rule).
+ */
+export function splitProtectedRegions(markdown: string): MarkdownSegment[] {
+  const segments: MarkdownSegment[] = [];
+  let buffer = "";
+  let i = 0;
+  const n = markdown.length;
+
+  const flushBuffer = () => {
+    if (buffer.length > 0) {
+      segments.push({ text: buffer, protected: false });
+      buffer = "";
+    }
+  };
+
+  const isAtLineStart = (pos: number): boolean => {
+    let j = pos - 1;
+    while (j >= 0 && (markdown[j] === " " || markdown[j] === "\t")) {
+      j--;
+    }
+    return j < 0 || markdown[j] === "\n";
+  };
+
+  while (i < n) {
+    const ch = markdown[i];
+
+    // Try fenced code block at line start.
+    if ((ch === "`" || ch === "~") && isAtLineStart(i)) {
+      let runLen = 0;
+      while (i + runLen < n && markdown[i + runLen] === ch) {
+        runLen++;
+      }
+      if (runLen >= 3) {
+        // Find the end of this line (the opening fence line).
+        let lineEnd = markdown.indexOf("\n", i + runLen);
+        if (lineEnd === -1) {
+          lineEnd = n;
+        }
+        const fenceStart = i;
+        let searchFrom = lineEnd;
+        let closed = false;
+        let blockEnd = n;
+        while (searchFrom < n) {
+          const nextNewline = markdown.indexOf("\n", searchFrom + 1);
+          const lineStart = searchFrom + 1;
+          // Skip leading whitespace (up to 3 spaces is standard; accept any).
+          let k = lineStart;
+          while (k < n && (markdown[k] === " " || markdown[k] === "\t")) {
+            k++;
+          }
+          let closeLen = 0;
+          while (k + closeLen < n && markdown[k + closeLen] === ch) {
+            closeLen++;
+          }
+          if (closeLen >= runLen) {
+            // The closing fence line must contain only the fence (and optional
+            // trailing whitespace). A strict check is fine for our purposes.
+            let after = k + closeLen;
+            while (after < n && (markdown[after] === " " || markdown[after] === "\t")) {
+              after++;
+            }
+            if (after === n || markdown[after] === "\n") {
+              closed = true;
+              blockEnd = after === n ? n : after;
+              // Include the trailing newline of the closing fence in the block.
+              if (blockEnd < n && markdown[blockEnd] === "\n") {
+                blockEnd += 1;
+              }
+              break;
+            }
+          }
+          if (nextNewline === -1) {
+            break;
+          }
+          searchFrom = nextNewline;
+        }
+        flushBuffer();
+        if (closed) {
+          segments.push({
+            text: markdown.slice(fenceStart, blockEnd),
+            protected: true
+          });
+          i = blockEnd;
+        } else {
+          // Unclosed fence: protect the rest of the document to be safe.
+          segments.push({
+            text: markdown.slice(fenceStart),
+            protected: true
+          });
+          i = n;
+        }
+        continue;
+      }
+    }
+
+    // Try inline code span.
+    if (ch === "`") {
+      let runLen = 0;
+      while (i + runLen < n && markdown[i + runLen] === "`") {
+        runLen++;
+      }
+      // Look for a closing run of exactly runLen backticks.
+      let searchFrom = i + runLen;
+      let closeAt = -1;
+      while (searchFrom < n) {
+        const nextTick = markdown.indexOf("`", searchFrom);
+        if (nextTick === -1) {
+          break;
+        }
+        let closeLen = 0;
+        while (nextTick + closeLen < n && markdown[nextTick + closeLen] === "`") {
+          closeLen++;
+        }
+        if (closeLen === runLen) {
+          closeAt = nextTick;
+          break;
+        }
+        searchFrom = nextTick + closeLen;
+      }
+      if (closeAt !== -1) {
+        flushBuffer();
+        const spanEnd = closeAt + runLen;
+        segments.push({
+          text: markdown.slice(i, spanEnd),
+          protected: true
+        });
+        i = spanEnd;
+        continue;
+      }
+      // No closing run: treat the backticks as literal text.
+    }
+
+    buffer += ch;
+    i++;
+  }
+
+  flushBuffer();
+  return segments;
+}
+
 export function transformStepReferences(
   markdown: string,
   activeTour: CodeTour,
   siblings: ReadonlyArray<CodeTour>
 ): string {
-  return markdown.replace(
-    TOUR_REFERENCE_PATTERN,
-    (full, linkTitle, tourTitle, stepNumber) => {
-      if (!stepNumber) {
-        return full;
-      }
-
-      const step = Number(stepNumber);
-      if (!Number.isInteger(step) || step < 1) {
-        return full;
-      }
-
-      let targetTour: CodeTour | undefined;
-      if (tourTitle) {
-        targetTour = findTourByTitle(tourTitle, siblings);
-        if (!targetTour) {
+  const replace = (text: string): string =>
+    text.replace(
+      TOUR_REFERENCE_PATTERN,
+      (full, linkTitle, tourTitle, stepNumber) => {
+        if (!stepNumber) {
           return full;
         }
-      } else {
-        targetTour = activeTour;
+
+        const step = Number(stepNumber);
+        if (!Number.isInteger(step) || step < 1) {
+          return full;
+        }
+
+        let targetTour: CodeTour | undefined;
+        if (tourTitle) {
+          targetTour = findTourByTitle(tourTitle, siblings);
+          if (!targetTour) {
+            return full;
+          }
+        } else {
+          targetTour = activeTour;
+        }
+
+        if (step > targetTour.steps.length) {
+          return full;
+        }
+
+        const defaultLabel = tourTitle
+          ? `${targetTour.title}#${step}`
+          : `#${step}`;
+        const label = linkTitle || defaultLabel;
+
+        return (
+          `<a href="#" data-action="openStep" ` +
+          `data-tour-id="${escapeAttribute(targetTour.id)}" ` +
+          `data-step="${step}">${escapeText(label)}</a>`
+        );
       }
+    );
 
-      if (step > targetTour.steps.length) {
-        return full;
-      }
-
-      const defaultLabel = tourTitle
-        ? `${targetTour.title}#${step}`
-        : `#${step}`;
-      const label = linkTitle || defaultLabel;
-
-      return (
-        `<a href="#" data-action="openStep" ` +
-        `data-tour-id="${escapeAttribute(targetTour.id)}" ` +
-        `data-step="${step}">${escapeText(label)}</a>`
-      );
-    }
-  );
+  return splitProtectedRegions(markdown)
+    .map(segment => (segment.protected ? segment.text : replace(segment.text)))
+    .join("");
 }
 
 export interface OverviewRenderOptions {
