@@ -37,8 +37,8 @@ import { registerPlayerCommands } from "./commands";
 import { registerDecorators } from "./decorator";
 import { registerFileSystemProvider } from "./fileSystem";
 import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
+import { registerSidebarViewProvider } from "./sidebar";
 import { registerStatusBar } from "./status";
-import { registerTreeProvider } from "./tree";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -435,7 +435,7 @@ async function showDocument(uri: Uri, range: Range, selection?: Selection) {
 
 export function registerPlayerModule(context: ExtensionContext) {
   registerPlayerCommands();
-  registerTreeProvider(context.extensionPath);
+  registerSidebarViewProvider(context);
   registerFileSystemProvider();
   registerTextDocumentContentProvider();
   registerStatusBar();

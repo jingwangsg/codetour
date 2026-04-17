@@ -221,8 +221,8 @@ Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour f
   - `uri` - An absolute URI that this step is associated with. Note that `uri` and `file` are mutually exclusive, so only set one per step
   - `line` - The 1-based line number that this step is associated with
   - `pattern` - A regular expression to associate the step with. This is only considered when the `line` property isn't set, and allows you to associate steps with line content as opposed to ordinal.
-  - `title` - An optional title, which will be displayed as the step name in the `CodeTour` tree view.
-  - `group` - An optional slash-delimited group path (for example, `Basics/Explorer`) that controls how the step is organized within the `CodeTour` tree view. This only affects sidebar presentation; the tour still plays back in the original `steps` array order.
+  - `title` - An optional title, which will be displayed as the step name in the `CodeTour` Explorer view.
+  - `tags` - An optional array of free-form tags that will be rendered as chips on the step card in the `CodeTour` Explorer view.
   - `commands` - An array of VS Code command strings, that indicate the name of a command (e.g. `codetour.endTour`) and any optional parameters to pass to it, specified as a query string array (eg. `codetour.endTour?[2]`).
   - `view` - The ID of a VS Code view that will be automatically focused when this step is navigated to.
 
@@ -329,13 +329,13 @@ The following sections describe the VS Code integrations that the CodeTour exten
 
 ### Tree View
 
-If the currently opened workspace has any code tours, or you're actively taking/recording a tour, you'll see a new tree view called `CodeTour`, that's added to the `Explorer` tab. This view lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `CodeTour: Start Tour` command. However, you can also expand a tour and start it at a specific step, edit/delete steps, re-order steps, and change the tour's description/title/git ref. If a step includes a `group` value, the tree view will render slash-delimited paths like `Basics/Explorer` as nested, collapsible groups inside the tour.
+If the currently opened workspace has any code tours, or you're actively taking/recording a tour, you'll see a `CodeTour` view in the `Explorer` tab. This view organizes tours into collapsible sections and renders each step as a card, so you can jump directly to a step, edit it, change its tags, re-order it, or delete it without the old one-line step list. Tags are displayed on each card as lightweight chips, and the active/completed state stays in sync with playback.
 
 <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 
-Additionally, the tree view will display the tour currently being [recorded](#authoring-tours), which makes it easy to track your status while in the process of creating a new tour.
+Additionally, the Explorer view will display the tour currently being [recorded](#authoring-tours), which makes it easy to track your status while in the process of creating a new tour.
 
-> The tree view is automatically kept up-to-date, as you add/edit/delete tours within the current workspace. So feel free to [record](#authoring-tours) and/or edit tours, and then navigate them when done.
+> The Explorer view is automatically kept up-to-date as you add/edit/delete tours within the current workspace. So feel free to [record](#authoring-tours) and/or edit tours, and then navigate them when done.
 
 ### Status Bar
 

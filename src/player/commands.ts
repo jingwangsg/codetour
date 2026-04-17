@@ -16,8 +16,8 @@ import {
   startCodeTour
 } from "../store/actions";
 import { progress } from "../store/storage";
+import { resolveTour, TourTarget } from "../targets";
 import { readUriContents } from "../utils";
-import { CodeTourNode } from "./tree/nodes";
 
 let terminal: vscode.Terminal | null;
 export function registerPlayerCommands() {
@@ -145,21 +145,23 @@ export function registerPlayerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTour`,
     async (
-      tour?: CodeTour | CodeTourNode,
+      tour?: CodeTour | TourTarget,
       stepNumber?: number,
       workspaceRoot?: vscode.Uri,
       tours?: CodeTour[]
     ) => {
       if (tour) {
-        const targetTour = tour instanceof CodeTourNode ? tour.tour : tour;
-        return startCodeTour(
-          targetTour,
-          stepNumber,
-          workspaceRoot,
-          undefined,
-          undefined,
-          tours
-        );
+        const targetTour = resolveTour(tour);
+        if (targetTour) {
+          return startCodeTour(
+            targetTour,
+            stepNumber,
+            workspaceRoot,
+            undefined,
+            undefined,
+            tours
+          );
+        }
       }
 
       selectTour(store.tours, workspaceRoot);
@@ -168,8 +170,13 @@ export function registerPlayerCommands() {
 
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.viewNotebook`,
-    async (node: CodeTourNode) => {
-      const tourUri = vscode.Uri.parse(node.tour.id);
+    async (target: TourTarget) => {
+      const tour = resolveTour(target);
+      if (!tour) {
+        return;
+      }
+
+      const tourUri = vscode.Uri.parse(tour.id);
       vscode.window.showTextDocument(tourUri);
     }
   );
@@ -247,7 +254,12 @@ export function registerPlayerCommands() {
 
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.exportTour`,
-    async (node: CodeTourNode) => {
+    async (target: TourTarget) => {
+      const tour = resolveTour(target);
+      if (!tour) {
+        return;
+      }
+
       const uri = await vscode.window.showSaveDialog({
         filters: {
           Tours: ["tour"]
@@ -259,7 +271,7 @@ export function registerPlayerCommands() {
         return;
       }
 
-      const contents = await exportTour(node.tour);
+      const contents = await exportTour(tour);
       const bytes = new TextEncoder().encode(contents);
       vscode.workspace.fs.writeFile(uri, bytes);
     }

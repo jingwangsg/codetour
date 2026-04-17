@@ -13,6 +13,10 @@ import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
 import {
+  createPersistedTour,
+  sanitizeStepForPersistence
+} from "./serialization";
+import {
   getStepFileUri,
   getWorkspaceKey,
   getWorkspaceUri,
@@ -216,28 +220,27 @@ export async function exportTour(tour: CodeTour) {
   if (newTour.steps) {
     newTour.steps = await Promise.all(
       newTour.steps.map(async step => {
+        const sanitizedStep = sanitizeStepForPersistence(step);
         if (step.contents || step.uri || !step.file) {
-          return step;
+          return sanitizedStep;
         }
 
         const workspaceRoot = getWorkspaceUri(tour);
         const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
         const contents = await readUriContents(stepFileUri);
 
-        delete step.markerTitle;
-
         return {
-          ...step,
+          ...sanitizedStep,
           contents
         };
       })
     );
   }
 
-  delete newTour.id;
-  delete newTour.ref;
+  const exportedTour = createPersistedTour(newTour as CodeTour);
+  delete exportedTour.ref;
 
-  return JSON.stringify(newTour, null, 2);
+  return JSON.stringify(exportedTour, null, 2);
 }
 
 export async function recordTour(workspaceRoot: Uri) {
