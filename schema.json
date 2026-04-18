@@ -92,6 +92,10 @@
               "type": "string"
             }
           },
+          "location": {
+            "type": "string",
+            "description": "An optional location label displayed below the step title in the CodeTour Explorer view."
+          },
           "color": {
             "type": "string",
             "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",

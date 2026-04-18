@@ -8,6 +8,7 @@ export interface SidebarStepState {
   tourId: string;
   stepNumber: number;
   title: string;
+  location?: string;
   tags: string[];
   color?: string;
   cardStyle?: string;
@@ -101,6 +102,7 @@ function buildStepState(
     tourId: tour.id,
     stepNumber,
     title: step.title || `Step #${stepNumber + 1}`,
+    location: step.location?.trim() || undefined,
     tags: normalizeTags(step.tags) || [],
     color,
     cardStyle: buildCardStyle(color),

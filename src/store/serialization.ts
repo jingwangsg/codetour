@@ -65,6 +65,13 @@ export function sanitizeStepForPersistence(
     delete sanitizedStep.tags;
   }
 
+  const trimmedLocation = step.location?.trim();
+  if (trimmedLocation) {
+    sanitizedStep.location = trimmedLocation;
+  } else {
+    delete sanitizedStep.location;
+  }
+
   const normalizedColor = normalizeColor(step.color);
   if (normalizedColor) {
     sanitizedStep.color = normalizedColor;

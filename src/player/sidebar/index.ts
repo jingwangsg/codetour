@@ -465,6 +465,15 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         min-width: 0;
       }
 
+      .card-location {
+        font-size: 10px;
+        line-height: 16px;
+        color: var(--vscode-descriptionForeground);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       .tag-row {
         cursor: pointer;
         padding: 1px 0 0;
@@ -628,6 +637,7 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
                 <span class="step-index">#\${step.stepNumber + 1}</span>
                 <h3 class="card-title">\${escapeHtml(step.title)}</h3>
               </div>
+              \${step.location ? '<div class="card-location">' + escapeHtml(step.location) + '</div>' : ''}
               <div class="tag-row"
                    data-action="changeTourStepTags"
                    data-tour-id="\${escapeHtml(step.tourId)}"

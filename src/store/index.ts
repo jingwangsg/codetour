@@ -14,6 +14,7 @@ export interface CodeTourStep {
   description: string;
   icon?: string;
   tags?: string[];
+  location?: string;
   color?: string;
 
   // If any of the following are set, then only
