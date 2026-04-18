@@ -81,7 +81,7 @@ class CodeTourNotebookProvider implements vscode.NotebookSerializer {
 }
 
 export function registerNotebookProvider() {
-  vscode.notebook.registerNotebookSerializer(
+  vscode.workspace.registerNotebookSerializer(
     EXTENSION_NAME,
     new CodeTourNotebookProvider()
   );
