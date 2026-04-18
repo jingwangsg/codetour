@@ -13,6 +13,7 @@ import {
 } from "vscode";
 import { EXTENSION_NAME } from "../../constants";
 import { CodeTour, store } from "../../store";
+import { getOverviewRenderSignature } from "../renderSignatures";
 import { renderOverviewHtml } from "./renderer";
 
 interface PanelRecord {
@@ -73,16 +74,13 @@ export function openTourOverview(tour: CodeTour): void {
   );
 
   const disposeReaction = reaction(
-    () => {
-      const current = findTour(tour.id);
-      return current
-        ? [current.title, current.overview, current.steps.length]
-        : null;
-    },
+    () => getOverviewRenderSignature(findTour(tour.id), store.tours),
     () => {
       const current = findTour(tour.id);
       if (current) {
         updatePanel(panel, current);
+      } else {
+        panel.dispose();
       }
     }
   );

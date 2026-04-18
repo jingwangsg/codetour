@@ -38,6 +38,7 @@ import { registerDecorators } from "./decorator";
 import { registerFileSystemProvider } from "./fileSystem";
 import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
 import { registerOverviewModule } from "./overview";
+import { getActiveTourRenderSignature } from "./renderSignatures";
 import { registerSidebarViewProvider } from "./sidebar";
 import { registerStatusBar } from "./status";
 
@@ -451,21 +452,7 @@ export function registerPlayerModule(context: ExtensionContext) {
   // Watch for changes to the active tour property,
   // and automatically re-render the current step in response.
   reaction(
-    () => [
-      store.activeTour
-        ? [
-            store.activeTour.step,
-            store.activeTour.tour.title,
-            store.activeTour.tour.steps.map(step => [
-              step.title,
-              step.description,
-              step.line,
-              step.directory,
-              step.view
-            ])
-          ]
-        : null
-    ],
+    () => getActiveTourRenderSignature(store.activeTour, store.tours),
     () => {
       if (store.activeTour) {
         renderCurrentStep();

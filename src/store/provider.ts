@@ -2,13 +2,18 @@
 // Licensed under the MIT License.
 
 import * as jexl from "jexl";
-import { comparer, runInAction, set } from "mobx";
+import { comparer, runInAction } from "mobx";
 import * as os from "os";
 import * as vscode from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { readUriContents, updateMarkerTitles } from "../utils";
 import { endCurrentCodeTour } from "./actions";
+import {
+  getReconciledActiveStep,
+  isDiscoverableTourPath,
+  syncTourInPlace
+} from "./refresh";
 
 export const MAIN_TOUR_FILES = [
   ".tour",
@@ -67,10 +72,21 @@ export async function discoverTours(): Promise<void> {
 
       if (tour) {
         if (!comparer.structural(store.activeTour.tour, tour)) {
-          // Since the active tour could be already observed,
-          // we want to update it in place with the new properties.
-          set(store.activeTour.tour, tour);
+          // Since the active tour could already be observed,
+          // update it in place and drop any removed optional fields.
+          syncTourInPlace(store.activeTour.tour, tour);
         }
+
+        const nextStep = getReconciledActiveStep(
+          store.activeTour.step,
+          tour.steps.length
+        );
+        if (nextStep === null) {
+          endCurrentCodeTour();
+          return;
+        }
+
+        store.activeTour.step = nextStep;
       } else {
         // The user deleted the tour
         // file that's associated with
@@ -151,10 +167,30 @@ async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
 
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
-const watcher = vscode.workspace.createFileSystemWatcher(
-  `**/{${SUB_TOUR_DIRECTORIES.join(",")}}/**/*.tour`
-);
+function shouldRefreshForUri(uri: vscode.Uri): boolean {
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+  if (!workspaceFolder) {
+    return false;
+  }
 
-watcher.onDidChange(discoverTours);
-watcher.onDidCreate(discoverTours);
-watcher.onDidDelete(discoverTours);
+  return isDiscoverableTourPath(
+    vscode.workspace.asRelativePath(uri, false),
+    SUB_TOUR_DIRECTORIES,
+    MAIN_TOUR_FILES
+  );
+}
+
+function registerWatcher(watcher: vscode.FileSystemWatcher) {
+  const refreshIfDiscoverable = (uri: vscode.Uri) => {
+    if (shouldRefreshForUri(uri)) {
+      discoverTours();
+    }
+  };
+
+  watcher.onDidChange(refreshIfDiscoverable);
+  watcher.onDidCreate(refreshIfDiscoverable);
+  watcher.onDidDelete(refreshIfDiscoverable);
+}
+
+registerWatcher(vscode.workspace.createFileSystemWatcher("**/.tour"));
+registerWatcher(vscode.workspace.createFileSystemWatcher("**/*.tour"));
