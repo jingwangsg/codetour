@@ -10,10 +10,19 @@ export interface SidebarStepState {
   title: string;
   location?: string;
   tags: string[];
+  details: SidebarStepDetailsState;
   color?: string;
   cardStyle?: string;
   isActive: boolean;
   isComplete: boolean;
+}
+
+export interface SidebarStepDetailsState {
+  target: string;
+  location?: string;
+  tags: string[];
+  description: string;
+  commands: string[];
 }
 
 export interface SidebarTourState {
@@ -97,13 +106,22 @@ function buildStepState(
   completedSteps: number[]
 ): SidebarStepState {
   const color = normalizeColor(step.color);
+  const location = step.location?.trim() || undefined;
+  const tags = normalizeTags(step.tags) || [];
 
   return {
     tourId: tour.id,
     stepNumber,
     title: step.title || `Step #${stepNumber + 1}`,
-    location: step.location?.trim() || undefined,
-    tags: normalizeTags(step.tags) || [],
+    location,
+    tags,
+    details: {
+      target: buildStepTarget(step),
+      location,
+      tags,
+      description: step.description.trim(),
+      commands: normalizeCommands(step.commands)
+    },
     color,
     cardStyle: buildCardStyle(color),
     isActive:
@@ -122,4 +140,55 @@ function buildCardStyle(color?: string): string | undefined {
   const blue = parseInt(color.slice(5, 7), 16);
 
   return `--step-accent-color:${color};--step-accent-background:rgba(${red}, ${green}, ${blue}, 0.18);--step-accent-border:rgba(${red}, ${green}, ${blue}, 0.42);`;
+}
+
+function buildStepTarget(step: CodeTourStep): string {
+  const parts = [buildStepTargetBase(step)];
+
+  if (step.line !== undefined) {
+    parts.push(`line ${step.line}`);
+  }
+
+  if (step.selection) {
+    const { start, end } = step.selection;
+    parts.push(
+      `selection ${start.line}:${start.character}-${end.line}:${end.character}`
+    );
+  }
+
+  if (step.pattern?.trim()) {
+    parts.push(`pattern ${step.pattern.trim()}`);
+  }
+
+  return parts.join(" | ");
+}
+
+function buildStepTargetBase(step: CodeTourStep): string {
+  if (step.contents !== undefined) {
+    return step.file
+      ? `Embedded content: ${step.file}`
+      : "Embedded content";
+  }
+
+  if (step.file) {
+    return `File: ${step.file}`;
+  }
+
+  if (step.directory) {
+    return `Directory: ${step.directory}`;
+  }
+
+  if (step.uri) {
+    return `URI: ${step.uri}`;
+  }
+
+  if (step.view) {
+    return `View: ${step.view}`;
+  }
+
+  return "Content-only step";
+}
+
+function normalizeCommands(commands?: string[]): string[] {
+  return commands?.map(command => command.trim()).filter(Boolean) || [];
 }

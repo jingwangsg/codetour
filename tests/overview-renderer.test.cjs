@@ -134,3 +134,23 @@ test("renderOverviewHtml loads the Mermaid webview script", () => {
     /<script nonce="test-nonce" src="vscode-resource:\/dist\/mermaid-webview\.js"><\/script>/
   );
 });
+
+test("renderOverviewHtml defines readable markdown styles", () => {
+  const html = renderOverviewHtml({
+    tour: {
+      ...tour,
+      overview: "`inline`"
+    },
+    siblings,
+    cspSource: "vscode-resource:",
+    nonce: "test-nonce",
+    renderMarkdown: source => `<p>${source}</p>`
+  });
+
+  assert.match(html, /\.overview \{/);
+  assert.match(html, /max-width: 1040px/);
+  assert.match(html, /code \{/);
+  assert.match(html, /color: var\(--vscode-editor-foreground\)/);
+  assert.match(html, /background: var\(--vscode-input-background/);
+  assert.match(html, /tbody tr:nth-child\(even\)/);
+});

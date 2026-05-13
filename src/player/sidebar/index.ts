@@ -507,6 +507,64 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         opacity: 1;
       }
 
+      .card-details {
+        display: none;
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid var(--vscode-editorWidget-border, transparent);
+        gap: 4px;
+      }
+
+      .card:hover .card-details {
+        display: grid;
+      }
+
+      .detail-title {
+        font-weight: 600;
+        line-height: 17px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: minmax(54px, max-content) minmax(0, 1fr);
+        gap: 6px;
+        align-items: start;
+        min-width: 0;
+      }
+
+      .detail-label {
+        color: var(--vscode-descriptionForeground);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .detail-value {
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .detail-description {
+        white-space: pre-wrap;
+      }
+
+      .detail-list {
+        display: grid;
+        gap: 2px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .detail-code {
+        font-family: var(--vscode-editor-font-family, var(--vscode-font-family));
+        font-size: 11px;
+      }
+
       .card-actions {
         display: flex;
         align-items: center;
@@ -611,6 +669,53 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
         return '<button class="button" data-action="' + escapeHtml(action) + '" ' + attrText + ">" + escapeHtml(label) + "</button>";
       }
 
+      function renderDetailRow(label, value, valueClass = "") {
+        if (!value) {
+          return "";
+        }
+
+        const className = valueClass ? ' detail-value ' + valueClass : ' detail-value';
+
+        return '<div class="detail-row"><span class="detail-label">' +
+          escapeHtml(label) +
+          '</span><span class="' +
+          className.trim() +
+          '">' +
+          value +
+          "</span></div>";
+      }
+
+      function renderDetailList(label, values, valueClass = "") {
+        if (!values || values.length === 0) {
+          return "";
+        }
+
+        const className = valueClass ? ' class="' + escapeHtml(valueClass) + '"' : "";
+        const items = values
+          .map(value => "<li" + className + ">" + escapeHtml(value) + "</li>")
+          .join("");
+
+        return renderDetailRow(label, '<ul class="detail-list">' + items + "</ul>");
+      }
+
+      function renderCardDetails(step) {
+        const details = step.details || {};
+        const description = details.description
+          ? escapeHtml(details.description)
+          : "";
+
+        return \`
+          <div class="card-details">
+            <div class="detail-title">\${escapeHtml(step.title)}</div>
+            \${renderDetailRow("Target", escapeHtml(details.target || ""))}
+            \${renderDetailRow("Location", escapeHtml(details.location || ""))}
+            \${renderDetailList("Tags", details.tags)}
+            \${renderDetailRow("Description", description, "detail-description")}
+            \${renderDetailList("Commands", details.commands, "detail-code")}
+          </div>
+        \`;
+      }
+
       function renderCard(step) {
         const tagPills = step.tags.length
           ? step.tags.map(tag => '<span class="tag">' + escapeHtml(tag) + "</span>").join("")
@@ -644,6 +749,7 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
                    data-step-number="\${step.stepNumber}"
                    role="button"
                    title="Edit tags">\${tagPills}</div>
+              \${renderCardDetails(step)}
             </button>
             <div class="card-actions">
               <button class="icon-button"

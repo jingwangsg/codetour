@@ -104,3 +104,78 @@ test("buildSidebarState prepends an active external tour that is not in discover
     [{ id: "external-tour", isActive: true }]
   );
 });
+
+test("buildSidebarState includes structured hover details for file steps", () => {
+  const tours = [
+    {
+      id: "tour-1",
+      title: "Detailed Tour",
+      steps: [
+        {
+          title: "Read setup",
+          description: "Line one\nLine two",
+          file: "src/setup.ts",
+          line: 12,
+          selection: {
+            start: { line: 12, character: 3 },
+            end: { line: 14, character: 8 }
+          },
+          pattern: "^setup",
+          location: " Startup path ",
+          tags: [" Setup ", "", "CLI"],
+          commands: ["codetour.nextTourStep", " codetour.endTour "]
+        }
+      ]
+    }
+  ];
+
+  const state = buildSidebarState({
+    tours,
+    activeTour: null,
+    progress: [],
+    isRecording: false,
+    isEditing: false
+  });
+
+  assert.deepEqual(state.tours[0].steps[0].details, {
+    target:
+      "File: src/setup.ts | line 12 | selection 12:3-14:8 | pattern ^setup",
+    location: "Startup path",
+    tags: ["Setup", "CLI"],
+    description: "Line one\nLine two",
+    commands: ["codetour.nextTourStep", "codetour.endTour"]
+  });
+});
+
+test("buildSidebarState formats non-file hover targets", () => {
+  const tours = [
+    {
+      id: "tour-1",
+      title: "Target Tour",
+      steps: [
+        { description: "Directory step", directory: "src/player" },
+        { description: "View step", view: "explorer" },
+        { description: "URI step", uri: "https://example.com/tour" },
+        { description: "Content step" }
+      ]
+    }
+  ];
+
+  const state = buildSidebarState({
+    tours,
+    activeTour: null,
+    progress: [],
+    isRecording: false,
+    isEditing: false
+  });
+
+  assert.deepEqual(
+    state.tours[0].steps.map(step => step.details.target),
+    [
+      "Directory: src/player",
+      "View: explorer",
+      "URI: https://example.com/tour",
+      "Content-only step"
+    ]
+  );
+});
