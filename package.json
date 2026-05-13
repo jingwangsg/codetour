@@ -1,6 +1,6 @@
 {
-  "name": "codetour",
-  "displayName": "CodeTour",
+  "name": "codetour-v2",
+  "displayName": "CodeTour V2",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
   "version": "0.0.59",
@@ -39,7 +39,7 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "CodeTour",
+      "title": "CodeTour V2",
       "properties": {
         "codetour.promptForWorkspaceTours": {
           "type": "boolean",
@@ -71,15 +71,15 @@
       {
         "command": "codetour.addContentStep",
         "title": "Add Tour Step",
-        "category": "CodeTour"
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.addDirectoryStep",
-        "title": "Add CodeTour Step"
+        "title": "Add CodeTour V2 Step"
       },
       {
         "command": "codetour.addSelectionStep",
-        "title": "Add CodeTour Step"
+        "title": "Add CodeTour V2 Step"
       },
       {
         "command": "codetour.addTourStep",
@@ -120,7 +120,7 @@
       {
         "command": "codetour.resetProgress",
         "title": "Reset Progress",
-        "category": "CodeTour"
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.resetTourProgress",
@@ -141,13 +141,13 @@
       {
         "command": "codetour.editTour",
         "title": "Edit Tour",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(edit)"
       },
       {
         "command": "codetour.endTour",
         "title": "End Tour",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(primitive-square)"
       },
       {
@@ -157,7 +157,7 @@
       {
         "command": "codetour.hideMarkers",
         "title": "Hide Tour Markers",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(eye-closed)"
       },
       {
@@ -183,12 +183,12 @@
         "command": "codetour.openTourFile",
         "title": "Open Tour File...",
         "icon": "$(folder-opened)",
-        "category": "CodeTour"
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.openTourUrl",
         "title": "Open Tour URL...",
-        "category": "CodeTour"
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.previewTour",
@@ -203,7 +203,7 @@
       {
         "command": "codetour.recordTour",
         "title": "Record Tour",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(add)"
       },
       {
@@ -213,7 +213,7 @@
       {
         "command": "codetour.resumeTour",
         "title": "Resume Tour",
-        "category": "CodeTour"
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.saveTourStep",
@@ -223,13 +223,13 @@
       {
         "command": "codetour.showMarkers",
         "title": "Show Tour Markers",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(eye)"
       },
       {
         "command": "codetour.startTour",
         "title": "Start Tour",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(play)"
       },
       {
@@ -239,12 +239,12 @@
       {
         "command": "codetour.viewNotebook",
         "title": "View Notebook",
-        "category": "CodeTour"
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.viewTourEntryDocument",
         "title": "View Tour Entry Document",
-        "category": "CodeTour",
+        "category": "CodeTour V2",
         "icon": "$(book)"
       }
     ],
@@ -486,7 +486,7 @@
       "explorer": [
         {
           "id": "codetour.tours",
-          "name": "CodeTour",
+          "name": "CodeTour V2",
           "type": "webview",
           "when": "workspaceFolderCount != 0 || codetour:inTour"
         }
@@ -541,7 +541,7 @@
     "notebookProvider": [
       {
         "viewType": "codetour",
-        "displayName": "CodeTour",
+        "displayName": "CodeTour V2",
         "selector": [
           {
             "filenamePattern": "*.tour-notebook"

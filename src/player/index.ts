@@ -43,7 +43,7 @@ import { registerSidebarViewProvider } from "./sidebar";
 import { registerStatusBar } from "./status";
 
 const CONTROLLER_ID = "codetour";
-const CONTROLLER_LABEL = "CodeTour";
+const CONTROLLER_LABEL = "CodeTour V2";
 
 let id = 0;
 

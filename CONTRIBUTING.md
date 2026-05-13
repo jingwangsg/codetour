@@ -15,7 +15,7 @@ or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any addi
 
 ## Getting Started
 
-Hey 👋 Thanks for wanting to contribute to `CodeTour`! Getting started is simple:
+Hey 👋 Thanks for wanting to contribute to `CodeTour V2`! Getting started is simple:
 
 1. Clone the repository
 1. CD into the cloned directory

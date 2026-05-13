@@ -89,9 +89,9 @@ export function registerPlayerCommands() {
     `${EXTENSION_NAME}.sendTextToTerminal`,
     async (text: string) => {
       if (!terminal) {
-        terminal = vscode.window.createTerminal("CodeTour");
+        terminal = vscode.window.createTerminal("CodeTour V2");
         vscode.window.onDidCloseTerminal(term => {
-          if (term.name === "CodeTour") {
+          if (term.name === "CodeTour V2") {
             terminal = null;
           }
         });

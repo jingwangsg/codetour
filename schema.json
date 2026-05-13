@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Schema for CodeTour tour files",
+  "title": "Schema for CodeTour V2 tour files",
   "type": "object",
   "required": ["title", "steps"],
   "properties": {
@@ -14,7 +14,7 @@
     },
     "overview": {
       "type": "string",
-      "description": "Optional long-form markdown document that introduces the tour as a whole. Rendered by the 'CodeTour: View Tour Entry Document' command. Supports step references of the form [#N] or [Tour Title#N]."
+      "description": "Optional long-form markdown document that introduces the tour as a whole. Rendered by the 'CodeTour V2: View Tour Entry Document' command. Supports step references of the form [#N] or [Tour Title#N]."
     },
     "ref": {
       "type": "string",
@@ -87,19 +87,19 @@
           },
           "tags": {
             "type": "array",
-            "description": "An optional list of tags that are displayed on the step card in the CodeTour Explorer view.",
+            "description": "An optional list of tags that are displayed on the step card in the CodeTour V2 Explorer view.",
             "items": {
               "type": "string"
             }
           },
           "location": {
             "type": "string",
-            "description": "An optional location label displayed below the step title in the CodeTour Explorer view."
+            "description": "An optional location label displayed below the step title in the CodeTour V2 Explorer view."
           },
           "color": {
             "type": "string",
             "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
-            "description": "An optional hex color used to tint the step card in the CodeTour Explorer view."
+            "description": "An optional hex color used to tint the step card in the CodeTour V2 Explorer view."
           },
           "description": {
             "type": "string",

@@ -87,24 +87,24 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
     options: { overwrite: boolean }
   ): Promise<void> {
     throw FileSystemError.NoPermissions(
-      "CodeTour doesn't support copying files."
+      "CodeTour V2 doesn't support copying files."
     );
   }
 
   createDirectory(uri: Uri): void {
     throw FileSystemError.NoPermissions(
-      "CodeTour doesn't support directories."
+      "CodeTour V2 doesn't support directories."
     );
   }
 
   async delete(uri: Uri, options: { recursive: boolean }): Promise<void> {
     throw FileSystemError.NoPermissions(
-      "CodeTour doesn't support deleting files."
+      "CodeTour V2 doesn't support deleting files."
     );
   }
 
   async readDirectory(uri: Uri): Promise<[string, FileType][]> {
-    throw FileSystemError.NoPermissions("CodeTour doesnt support directories.");
+    throw FileSystemError.NoPermissions("CodeTour V2 doesnt support directories.");
   }
 
   watch(
@@ -112,7 +112,7 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
     options: { recursive: boolean; excludes: string[] }
   ): Disposable {
     throw FileSystemError.NoPermissions(
-      "CodeTour doesn't support watching files."
+      "CodeTour V2 doesn't support watching files."
     );
   }
 }

@@ -698,7 +698,7 @@ function getSidebarHtml(webview: vscode.Webview, state: SidebarState): string {
       function renderEmptyState() {
         app.innerHTML = \`
           <section class="empty-state">
-            <h1 class="empty-title">CodeTour</h1>
+            <h1 class="empty-title">CodeTour V2</h1>
             <p class="empty-copy">Record a guided walkthrough or open a tour someone shared with you.</p>
             <div class="toolbar">
               \${renderButton("Record Tour", "recordTour")}

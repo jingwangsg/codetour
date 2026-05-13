@@ -69,7 +69,7 @@ function registerHoverProvider() {
       const hovers = tourSteps.map(([tour, _, stepNumber]) => {
         const args = encodeURIComponent(JSON.stringify([tour.id, stepNumber]));
         const command = `command:codetour._startTourById?${args}`;
-        return `CodeTour: ${tour.title} (Step #${
+        return `CodeTour V2: ${tour.title} (Step #${
           stepNumber + 1
         }) &nbsp;[Start Tour](${command} "Start Tour")\n`;
       });
