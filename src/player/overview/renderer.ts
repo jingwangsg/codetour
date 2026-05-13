@@ -278,14 +278,41 @@ export function renderOverviewHtml({
         color: var(--vscode-editor-foreground);
         background: var(--vscode-editor-background);
       }
-      .overview { max-width: 820px; margin: 0 auto; }
-      h1, h2, h3, h4 { color: var(--vscode-foreground); }
-      pre, code {
-        font-family: var(--vscode-editor-font-family, monospace);
-        background: var(--vscode-textCodeBlock-background, rgba(127,127,127,0.1));
+      .overview {
+        max-width: 1040px;
+        margin: 0 auto;
+        color: var(--vscode-editor-foreground);
       }
-      pre { padding: 10px 12px; border-radius: 4px; overflow: auto; }
-      code { padding: 1px 4px; border-radius: 3px; }
+      .overview > :first-child { margin-top: 0; }
+      .overview > :last-child { margin-bottom: 0; }
+      h1, h2, h3, h4 { color: var(--vscode-foreground); }
+      p, ul, ol, blockquote, pre, table {
+        margin: 0 0 16px;
+      }
+      pre,
+      code {
+        font-family: var(--vscode-editor-font-family, monospace);
+      }
+      pre {
+        padding: 12px 14px;
+        border: 1px solid var(--vscode-editorWidget-border, rgba(127,127,127,0.28));
+        border-radius: 6px;
+        overflow: auto;
+        color: var(--vscode-editor-foreground);
+        background: var(--vscode-editorWidget-background, rgba(127,127,127,0.10));
+      }
+      pre code {
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+      code {
+        padding: 1px 5px;
+        border: 1px solid var(--vscode-editorWidget-border, rgba(127,127,127,0.24));
+        border-radius: 4px;
+        color: var(--vscode-editor-foreground);
+        background: var(--vscode-input-background, rgba(127,127,127,0.12));
+      }
       a { color: var(--vscode-textLink-foreground); cursor: pointer; }
       a:hover { text-decoration: underline; }
       blockquote {
@@ -295,8 +322,31 @@ export function renderOverviewHtml({
         color: var(--vscode-textBlockQuote-foreground, inherit);
         background: var(--vscode-textBlockQuote-background, transparent);
       }
-      table { border-collapse: collapse; }
-      th, td { border: 1px solid var(--vscode-editorWidget-border, #8884); padding: 4px 8px; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--vscode-editorWidget-border, rgba(127,127,127,0.28));
+        background: var(--vscode-editor-background);
+      }
+      th,
+      td {
+        border: 1px solid var(--vscode-editorWidget-border, rgba(127,127,127,0.28));
+        padding: 8px 10px;
+        vertical-align: top;
+      }
+      th {
+        color: var(--vscode-foreground);
+        font-weight: 600;
+        background: var(--vscode-editorWidget-background, rgba(127,127,127,0.10));
+      }
+      tbody tr:nth-child(even) {
+        background: var(--vscode-list-hoverBackground, rgba(127,127,127,0.06));
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--vscode-editorWidget-border, rgba(127,127,127,0.28));
+        margin: 22px 0 14px;
+      }
     </style>
   </head>
   <body>
