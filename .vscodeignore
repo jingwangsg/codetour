@@ -8,6 +8,7 @@ package.lock.json
 tsconfig.json
 webpack.config.js
 **/*.vsix
+dist/[0-9]*.mermaid-webview.js*
 .git/**
 .github/**
 .worktrees/**

@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { loadTsModule } = require("./helpers/load-ts-module.cjs");
 
-const { transformStepReferences } = loadTsModule(
+const { renderOverviewHtml, transformStepReferences } = loadTsModule(
   "./src/player/overview/renderer.ts"
 );
 
@@ -114,4 +114,23 @@ test("handles tilde-fenced blocks", () => {
     `expected tilde fence to stay literal, got: ${out}`
   );
   assert.ok(!out.includes('data-step="2"'));
+});
+
+test("renderOverviewHtml loads the Mermaid webview script", () => {
+  const html = renderOverviewHtml({
+    tour: {
+      ...tour,
+      overview: "```mermaid\ngraph TD\n  A --> B\n```"
+    },
+    siblings,
+    cspSource: "vscode-resource:",
+    nonce: "test-nonce",
+    mermaidScriptUri: "vscode-resource:/dist/mermaid-webview.js",
+    renderMarkdown: source => `<div class="mermaid">${source}</div>`
+  });
+
+  assert.match(
+    html,
+    /<script nonce="test-nonce" src="vscode-resource:\/dist\/mermaid-webview\.js"><\/script>/
+  );
 });

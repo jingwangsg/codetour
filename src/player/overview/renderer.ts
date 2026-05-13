@@ -236,6 +236,7 @@ export interface OverviewRenderOptions {
   siblings: ReadonlyArray<CodeTour>;
   cspSource: string;
   nonce: string;
+  mermaidScriptUri?: string;
   renderMarkdown: (source: string) => string;
 }
 
@@ -244,6 +245,7 @@ export function renderOverviewHtml({
   siblings,
   cspSource,
   nonce,
+  mermaidScriptUri,
   renderMarkdown
 }: OverviewRenderOptions): string {
   const rawOverview = tour.overview?.trim();
@@ -253,6 +255,9 @@ export function renderOverviewHtml({
 
   const body = renderMarkdown(source);
   const title = escapeText(tour.title);
+  const mermaidScript = mermaidScriptUri
+    ? `    <script nonce="${nonce}" src="${escapeAttribute(mermaidScriptUri)}"></script>\n`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -296,7 +301,7 @@ export function renderOverviewHtml({
   </head>
   <body>
     <main class="overview">${body}</main>
-    <script nonce="${nonce}">
+${mermaidScript}    <script nonce="${nonce}">
       const vscode = acquireVsCodeApi();
       document.addEventListener("click", event => {
         const anchor = event.target.closest('a[data-action="openStep"]');

@@ -63,4 +63,25 @@ const webConfig = {
   }
 };
 
-module.exports = [nodeConfig, webConfig];
+const webviewConfig = {
+  ...config,
+  target: "web",
+  entry: "./src/player/mermaidWebview.js",
+  optimization: {
+    splitChunks: false,
+    runtimeChunk: false
+  },
+  plugins: [
+    ...config.plugins,
+    new webpack.optimize.LimitChunkCountPlugin({
+      maxChunks: 1
+    })
+  ],
+  output: {
+    path: path.resolve(__dirname, "dist"),
+    filename: "mermaid-webview.js",
+    devtoolModuleFilenameTemplate: "../[resource-path]"
+  }
+};
+
+module.exports = [nodeConfig, webConfig, webviewConfig];

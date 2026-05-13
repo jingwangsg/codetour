@@ -2,17 +2,18 @@
 // Licensed under the MIT License.
 
 import { reaction } from "mobx";
-import { marked } from "marked";
 import {
   commands,
   Disposable,
   ExtensionContext,
+  Uri,
   ViewColumn,
   WebviewPanel,
   window
 } from "vscode";
 import { EXTENSION_NAME } from "../../constants";
 import { CodeTour, store } from "../../store";
+import { renderMarkdownWithMermaid } from "../markdown";
 import { getOverviewRenderSignature } from "../renderSignatures";
 import { renderOverviewHtml } from "./renderer";
 
@@ -22,6 +23,7 @@ interface PanelRecord {
 }
 
 const panels = new Map<string, PanelRecord>();
+let extensionUri: Uri | undefined;
 
 const NONCE_ALPHABET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -36,8 +38,13 @@ function getNonce(): string {
   return nonce;
 }
 
-function renderMarkdown(source: string): string {
-  return marked.parse(source, { async: false }) as string;
+function getMermaidScriptUri(panel: WebviewPanel): string | undefined {
+  if (!extensionUri) {
+    return undefined;
+  }
+
+  const scriptUri = Uri.joinPath(extensionUri, "dist", "mermaid-webview.js");
+  return panel.webview.asWebviewUri(scriptUri).toString();
 }
 
 function updatePanel(panel: WebviewPanel, tour: CodeTour): void {
@@ -47,7 +54,8 @@ function updatePanel(panel: WebviewPanel, tour: CodeTour): void {
     siblings: store.tours,
     cspSource: panel.webview.cspSource,
     nonce: getNonce(),
-    renderMarkdown
+    mermaidScriptUri: getMermaidScriptUri(panel),
+    renderMarkdown: renderMarkdownWithMermaid
   });
 }
 
@@ -70,7 +78,13 @@ export function openTourOverview(tour: CodeTour): void {
     `${EXTENSION_NAME}.overview`,
     `${tour.title} — Overview`,
     { viewColumn: ViewColumn.Active, preserveFocus: false },
-    { enableScripts: true, retainContextWhenHidden: true }
+    {
+      enableScripts: true,
+      localResourceRoots: extensionUri
+        ? [Uri.joinPath(extensionUri, "dist")]
+        : undefined,
+      retainContextWhenHidden: true
+    }
   );
 
   const disposeReaction = reaction(
@@ -111,6 +125,8 @@ export function openTourOverview(tour: CodeTour): void {
 }
 
 export function registerOverviewModule(context: ExtensionContext): void {
+  extensionUri = context.extensionUri;
+
   const disposable: Disposable = {
     dispose() {
       panels.forEach(record => {
