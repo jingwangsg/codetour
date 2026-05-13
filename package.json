@@ -60,6 +60,19 @@
           "default": true,
           "description": "Specifies whether or not to show tour markers in the editor gutter."
         },
+        "codetour.stepDisplayMode": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "page"
+          ],
+          "default": "inline",
+          "enumDescriptions": [
+            "Show each tour step as an inline block between code lines.",
+            "Show each tour step in a CodeTour V2 page beside the code editor."
+          ],
+          "description": "Specifies where CodeTour V2 displays the active tour step during playback."
+        },
         "codetour.customTourDirectory": {
           "type": "string",
           "default": null,
@@ -231,6 +244,11 @@
         "title": "Start Tour",
         "category": "CodeTour V2",
         "icon": "$(play)"
+      },
+      {
+        "command": "codetour.selectStepDisplayMode",
+        "title": "Select Step Display Mode",
+        "category": "CodeTour V2"
       },
       {
         "command": "codetour.unmakeTourPrimary",

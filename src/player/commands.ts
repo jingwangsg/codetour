@@ -18,6 +18,13 @@ import {
 import { progress } from "../store/storage";
 import { resolveTour, TourTarget } from "../targets";
 import { readUriContents } from "../utils";
+import {
+  normalizeStepDisplayMode,
+  STEP_DISPLAY_MODE_INLINE,
+  STEP_DISPLAY_MODE_PAGE,
+  STEP_DISPLAY_MODE_SETTING,
+  StepDisplayMode
+} from "./displayMode";
 import { openTourOverview } from "./overview";
 
 let terminal: vscode.Terminal | null;
@@ -332,6 +339,45 @@ export function registerPlayerCommands() {
 
   vscode.commands.registerCommand(`${EXTENSION_NAME}.showMarkers`, () =>
     setShowMarkers(true)
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.selectStepDisplayMode`,
+    async () => {
+      const currentMode = normalizeStepDisplayMode(
+        vscode.workspace
+          .getConfiguration(EXTENSION_NAME)
+          .get(STEP_DISPLAY_MODE_SETTING)
+      );
+      const items: Array<vscode.QuickPickItem & { mode: StepDisplayMode }> = [
+        {
+          label: "Inline",
+          description: "Show each step as a block between code lines",
+          picked: currentMode === STEP_DISPLAY_MODE_INLINE,
+          mode: STEP_DISPLAY_MODE_INLINE
+        },
+        {
+          label: "Page",
+          description: "Show each step in a CodeTour V2 page beside the code",
+          picked: currentMode === STEP_DISPLAY_MODE_PAGE,
+          mode: STEP_DISPLAY_MODE_PAGE
+        }
+      ];
+
+      const picked = await vscode.window.showQuickPick(items, {
+        placeHolder: "Select how CodeTour V2 displays tour steps"
+      });
+
+      if (picked) {
+        await vscode.workspace
+          .getConfiguration(EXTENSION_NAME)
+          .update(
+            STEP_DISPLAY_MODE_SETTING,
+            picked.mode,
+            vscode.ConfigurationTarget.Global
+          );
+      }
+    }
   );
 
   vscode.commands.registerCommand(`${EXTENSION_NAME}.resetProgress`, () =>
