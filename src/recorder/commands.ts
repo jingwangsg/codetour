@@ -388,6 +388,10 @@ export function registerRecorderCommands() {
 
       const workspaceRoot = getActiveWorkspacePath();
       const file = getRelativePath(workspaceRoot, thread!.uri.path);
+      const range = thread!.range;
+      if (!range) {
+        return;
+      }
 
       const step: CodeTourStep = {
         file,
@@ -403,7 +407,7 @@ export function registerRecorderCommands() {
           editor => editor.document && editor.document.uri.scheme === "file"
         );
         const contents = fileEditors?.[0]?.document
-          .lineAt(thread.range.start.line)
+          .lineAt(range.start.line)
           .text.trim();
 
         const pattern =
@@ -419,10 +423,10 @@ export function registerRecorderCommands() {
           step.pattern = pattern;
         } else {
           // TODO: Try to get smarter about how to handle this.
-          step.line = thread.range.start.line + 1;
+          step.line = range.start.line + 1;
         }
       } else {
-        step.line = thread.range.start.line + 1;
+        step.line = range.start.line + 1;
       }
 
       store.activeTour!.step++;
